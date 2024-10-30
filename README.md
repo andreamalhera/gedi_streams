@@ -385,11 +385,6 @@ python main.py -a config_files/experiment_real_targets.json
 ```
 
 ### Generating data with grid targets
-To execute the experiments with grid targets, a single [configuration](config_files/grid_2obj) can be selected or all [grid objectives](data/grid_2obj) can be run with one command using the following script. This script will output the [generated event logs (GenED)](data/event_logs/GenED), alongside their respectively measured [feature values](data/GenED_feat.csv) and [benchmark metrics values](data/GenED_bench.csv).
-```
-conda activate gedi
-python gedi/utils/execute_grid_experiments.py config_files/test
-```
 We employ the [experiment_grid_2obj_configfiles_fabric.ipynb](notebooks/experiment_grid_2obj_configfiles_fabric.ipynb) to create all necessary [configuration](config_files/grid_2obj) and [objective](data/grid_2obj) files for this experiment.
 For more details about these config_files, please refer to [Feature Extraction](#feature-extraction), [Generation](#generation), and [Benchmark](#benchmark).
 To create configuration files for grid objectives interactively, you can use the start the following dashboard:
