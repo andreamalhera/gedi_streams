@@ -1,35 +1,18 @@
----
-title: iGedi
-emoji: 🌖
-colorFrom: indigo
-colorTo: pink
-sdk: streamlit
-sdk_version: 1.38.0
-app_file: utils/config_fabric.py
-pinned: false
-license: mit
----
-
 <p>
   <img src="gedi/utils/logo.png" alt="Logo" width="100" align="left" />
-  <h1 style="display: inline;">(i)GEDI</h1>
+  <h1 style="display: inline;">GEDI Streams</h1>
 </p>
 
-(**i**nteractive) **G**enerating **E**vent **D**ata with **I**ntentional Features for Benchmarking Process Mining<br />
-This repository contains the codebase for the interactive web application tool (iGEDI) as well as for the [GEDI paper](https://mcml.ai/publications/gedi.pdf) accepted at the BPM'24 conference.
+**G**enerating **E**vent **D**ata with **I**ntentional Features for Process Mining **Streams** <br />
+This repository contains the codebase based on the [GEDI paper](https://mcml.ai/publications/gedi.pdf) accepted at the <> conference.
 
 ## Table of Contents
 
-- [Interactive Web Application (iGEDI)](#interactive-web-application)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [General Usage](#general-usage)
 - [Experiments](#experiments)
 - [Citation](#citation)
-
-## Interactive Web Application
-Our [interactive web application](https://huggingface.co/spaces/andreamalhera/gedi) (iGEDI) guides you through the specification process, runs GEDI for you. You can directly download the resulting generated logs or the configuration file to run GEDI locally.
-![Interface Screenshot](gedi/utils/iGEDI_interface.png)
 
 ## Requirements
 - [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
@@ -44,9 +27,19 @@ brew install swig
 conda install pyrfr swig
 ```
 ## Installation
+To directly use GEDI methods via `import gedi`, install directly from [PyPi](https://pypi.org/project/gedi/).
+```console
+pip install gedi
+```
+Alternatively, you can create an environment with
 - `conda env create -f .conda.yml`
 
-### Startup
+Run:
+```console
+python -c "from gedi import gedi; gedi('config_files/pipeline_steps/generation.json')"
+```
+or
+
 ```console
 conda activate gedi
 python main.py -a config_files/test/experiment_test.json
@@ -386,15 +379,8 @@ python main.py -a config_files/experiment_real_targets.json
 
 ### Generating data with grid targets
 We employ the [experiment_grid_2obj_configfiles_fabric.ipynb](notebooks/experiment_grid_2obj_configfiles_fabric.ipynb) to create all necessary [configuration](config_files/grid_2obj) and [objective](data/grid_2obj) files for this experiment.
-For more details about these config_files, please refer to [Feature Extraction](#feature-extraction), [Generation](#generation), and [Benchmark](#benchmark).
-To create configuration files for grid objectives interactively, you can use the start the following dashboard:
-```
-streamlit run utils/config_fabric.py # To tunnel to local machine add: --server.port 8501 --server.headless true
-
-# In local machine (only in case you are tunneling):
-ssh -N -f -L 9000:localhost:8501 <user@remote_machine.com>
-open "http://localhost:9000/"
-```
+To create configuration files for grid objectives interactively, you can use the start the [iGEDI Webapp](https://huggingface.co/spaces/andreamalhera/gedi) or the following dashboard from [iGEDI](https://github.com/lmu-dbs/gedi/blob/1d56290b643e3507cb0a2a70963c0e77188e045d/README.md?plain=1#L397)
+For running config_files, please refer to [Feature Extraction](#feature-extraction), [Generation](#generation), and [Benchmark](#benchmark).
 
 ### Visualizations
 To run the visualizations, we employ [jupyter notebooks](https://jupyter.org/install) and [add the installed environment to the jupyter notebook](https://medium.com/@nrk25693/how-to-add-your-conda-environment-to-your-jupyter-notebook-in-just-4-steps-abeab8b8d084). We then start all visualizations by running e.g.: `jupyter noteboook`. In the following, we describe the `.ipynb`-files in the folder `\notebooks` to reproduce the figures from our paper. 
@@ -413,43 +399,3 @@ This notebook is used to answer the question if there is a statistically signifi
 Likewise to the evaluation on the statistical tests in notebook `gedi_figs7and8_benchmarking_statisticalTests.ipynb`, this notebook is used to compute the differences between two correlation matrices $\Delta C = C_1 - C_2$. This logic is employed to evaluate and visualize the distance of two correlation matrices. Furthermore, we show how significant scores are retained from the correlations being evaluated on real-world datasets coompared to synthesized event log datasets with real-world targets. In Fig. 9 and 10 in the paper, the results of the notebook are shown. 
 
 ## Citation
-The `GEDI` framework is taken directly from the original paper by [Maldonado](mailto:andreamalher.works@gmail.com), Frey, Tavares, Rehwald and Seidl on BPM'24.
-
-```bibtex
-@InProceedings{maldonado2024gedi,
-author="Maldonado, Andrea
-and Frey, Christian M. M.
-and Tavares, Gabriel Marques
-and Rehwald, Nikolina
-and Seidl, Thomas",
-editor="Marrella, Andrea
-and Resinas, Manuel
-and Jans, Mieke
-and Rosemann, Michael",
-title="GEDI: Generating Event Data with Intentional Features for Benchmarking Process Mining",
-booktitle="Business Process Management",
-year="2024",
-publisher="Springer Nature Switzerland",
-address="Cham",
-pages="221--237",
-abstract="Process mining solutions include enhancing performance, conserving resources, and alleviating bottlenecks in organizational contexts. However, as in other data mining fields, success hinges on data quality and availability. Existing analyses for process mining solutions lack diverse and ample data for rigorous testing, hindering insights' generalization. To address this, we propose Generating Event Data with Intentional features, a framework producing event data sets satisfying specific meta-features. Considering the meta-feature space that defines feasible event logs, we observe that existing real-world datasets describe only local areas within the overall space. Hence, our framework aims at providing the capability to generate an event data benchmark, which covers unexplored regions. Therefore, our approach leverages a discretization of the meta-feature space to steer generated data towards regions, where a combination of meta-features is not met yet by existing benchmark datasets. Providing a comprehensive data pool enriches process mining analyses, enables methods to capture a wider range of real-world scenarios, and improves evaluation quality. Moreover, it empowers analysts to uncover correlations between meta-features and evaluation metrics, enhancing explainability and solution effectiveness. Experiments demonstrate GEDI's ability to produce a benchmark of intentional event data sets and robust analyses for process mining tasks.",
-isbn="978-3-031-70396-6"
-}
-```
-
-Furthermore, the `iGEDI` web application is taken directly from the original paper by [Maldonado](mailto:andreamalher.works@gmail.com), Aryasomayajula, Frey, and Seidl and is *to appear on Demos@ICPM'24*.
-```
-@inproceedings{maldonado2024igedi,
-  author       = {Andrea Maldonado and
-                  Sai Anirudh Aryasomayajula and
-                  Christian M. M. Frey and
-                  Thomas Seidl},
-  editor       = {Jochen De Weerdt, Giovanni Meroni, Han van der Aa, and Karolin Winter},
-  title        = {iGEDI: interactive Generating Event Data with Intentional Features},
-  booktitle    = {ICPM 2024 Tool Demonstration Track, October 14-18, 2024, Kongens Lyngby, Denmark},
-  series       = {{CEUR} Workshop Proceedings},
-  publisher    = {CEUR-WS.org},
-  year         = {2024},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-```
