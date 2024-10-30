@@ -3,7 +3,7 @@ import pandas as pd
 from datetime import datetime as dt
 from gedi.generator import GenerateEventLogs
 from gedi.features import EventLogFeatures
-from gedi.plotter import BenchmarkPlotter, FeaturesPlotter, GenerationPlotter
+from gedi.plotter import FeaturesPlotter, GenerationPlotter
 from utils.default_argparse import ArgParser
 from utils.param_keys import *
 
