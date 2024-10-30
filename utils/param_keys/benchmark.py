@@ -1,2 +1,0 @@
-# Benchmark params
-MINERS = 'miners'

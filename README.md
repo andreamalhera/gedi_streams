@@ -50,7 +50,6 @@ The last step should take only a few minutes to run.
 Our pipeline offers several pipeline steps, which can be run sequentially or partially ordered:
 - [Feature Extraction](#feature-extraction)
 - [Generation](#generation)
-- [Benchmark](#benchmark)
 - [Evaluation Plotter](https://github.com/lmu-dbs/gedi/blob/16-documentation-update-readme/README.md#evaluation-plotting)
 
 To run different steps of the GEDI pipeline, please adapt the `.json` accordingly.
@@ -331,26 +330,8 @@ In case of manually defining the targets for the features in config space, the f
     </table>
 </div>
 
-### Benchmark
-The benchmarking defines the downstream task which is used for evaluating the goodness of the synthesized event log datasets with the metrics of real-world datasets. The command to execute a benchmarking is shown in the following script:
-
-```console
-conda activate gedi
-python main.py -a config_files/pipeline_steps/benchmark.json
-```
-
-In the `benchmark.json`, we have the following key-value pairs:
-
-* pipeline_step: denotes the current step in the pipeline (here: benchmark_test)
-* benchmark_test: defines the downstream task. Currently (in v 1.0), only `discovery` for process discovery is implemented
-* input_path: defines the input folder where the synthesized event log data are stored
-* output_path: defines the output folder
-* miners: defines the miners for the downstream task 'discovery' which are used in the benchmarking. In v 1.0 the miners 'inductive' for inductive miner, 'heuristics' for heuristics miner, 'imf' for inductive miner infrequent, as well as 'ilp' for integer linear programming are implemented
-
-
 ### Evaluation Plotting
 The purpose of the evaluation plotting step is used just for visualization. Some examples of how the plotter can be used is shown in the following exemplarily script:
-
 
 ```console
 conda activate gedi
@@ -380,20 +361,13 @@ python main.py -a config_files/experiment_real_targets.json
 ### Generating data with grid targets
 We employ the [experiment_grid_2obj_configfiles_fabric.ipynb](notebooks/experiment_grid_2obj_configfiles_fabric.ipynb) to create all necessary [configuration](config_files/grid_2obj) and [objective](data/grid_2obj) files for this experiment.
 To create configuration files for grid objectives interactively, you can use the start the [iGEDI Webapp](https://huggingface.co/spaces/andreamalhera/gedi) or the following dashboard from [iGEDI](https://github.com/lmu-dbs/gedi/blob/1d56290b643e3507cb0a2a70963c0e77188e045d/README.md?plain=1#L397)
-For running config_files, please refer to [Feature Extraction](#feature-extraction), [Generation](#generation), and [Benchmark](#benchmark).
+For running config_files, please refer to [Feature Extraction](#feature-extraction), and [Generation](#generation).
 
 ### Visualizations
 To run the visualizations, we employ [jupyter notebooks](https://jupyter.org/install) and [add the installed environment to the jupyter notebook](https://medium.com/@nrk25693/how-to-add-your-conda-environment-to-your-jupyter-notebook-in-just-4-steps-abeab8b8d084). We then start all visualizations by running e.g.: `jupyter noteboook`. In the following, we describe the `.ipynb`-files in the folder `\notebooks` to reproduce the figures from our paper. 
 
 #### [Fig. 4 and fig. 5 Representativeness](notebooks/gedi_figs4and5_representativeness.ipynb)
 To visualize the coverage of the feasible feature space of generated event logs compared to existing real-world benchmark datasets, in this notebook, we conduct a principal component analysis on the features of both settings. The first two principal components are utilized to visualize the coverage which is further highlighted by computing a convex hull of the 2D mapping.Additionally, we visualize the distribution of each meta feature we used in the paper as a boxplot. Additional features can be extracted with FEEED. Therefore, the notebook contains the figures 4 and 5 in the paper.
-
-#### [Fig. 6 Benchmark Boxplots](notebooks/gedi_fig6_benchmark_boxplots.ipynb)
-This notebook is used to visualize the metric distribution of real event logs compared to the generated ones. It shows 5 different metrics on 3 various process discovery techniques. We use 'fitness,', 'precision', 'fscore', 'size', 'cfc' (control-flow complexity) as metrics and as 'heuristic miner', 'ilp' (integer linear programming), and 'imf' (inductive miner infrequent) as miners. The notebook outputs the visualization shown in Fig.6 in the paper.
-
-#### [Fig. 7 and fig. 8 Benchmark's Statistical Tests](notebooks/gedi_figs7and8_benchmarking_statisticalTests.ipynb)
-
-This notebook is used to answer the question if there is a statistically significant relation between feature similarity and performance metrics for the downstream tasks of process discovery. For that, we compute the pearson coefficient, as well as the kendall's tau coefficient. This elucidates the correlation between the features with metric scores being used for process discovery. Each coefficient is calculated for three different settings: i) real-world datasets; ii) synthesized event log data with real-world targets; iii) synthesized event log data with grid objectives. Figures 7 and 8 shown in the paper refer to this notebook.
 
 #### [Fig. 9 Consistency and fig. 10 Limitations](notebooks/gedi_figs9and10_consistency.ipynb)
 Likewise to the evaluation on the statistical tests in notebook `gedi_figs7and8_benchmarking_statisticalTests.ipynb`, this notebook is used to compute the differences between two correlation matrices $\Delta C = C_1 - C_2$. This logic is employed to evaluate and visualize the distance of two correlation matrices. Furthermore, we show how significant scores are retained from the correlations being evaluated on real-world datasets coompared to synthesized event log datasets with real-world targets. In Fig. 9 and 10 in the paper, the results of the notebook are shown. 

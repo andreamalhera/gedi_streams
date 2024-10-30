@@ -251,69 +251,6 @@ class ArrayPlotter(MyPlotter):
         self._activate_legend = True
         self._post_processing()
 
-class BenchmarkPlotter:
-    def __init__(self, benchmark_results, output_path = None):
-        self.plot_miners_correlation(benchmark_results, output_path=output_path)
-        self.plot_miner_feat_correlation(benchmark_results, output_path=output_path)
-        self.plot_miner_feat_correlation(benchmark_results, mean='methods', output_path=output_path)
-
-    def plot_miner_feat_correlation(self, benchmark, mean='metrics', output_path=None):
-        df = benchmark.loc[:, benchmark.columns!='log']
-        corr = df.corr()
-
-        if mean == 'methods':
-            for method in ['inductive', 'heu', 'ilp']:
-                method_cols = [col for col in corr.columns if col.startswith(method)]
-                corr[method+'_avg'] = corr.loc[:, corr.columns.isin(method_cols)].mean(axis=1)
-        elif mean == 'metrics':
-            for metric in ['fitness', 'precision', 'generalization', 'simplicity']:
-                metric_cols = [col for col in corr.columns if col.endswith(metric)]
-                corr[metric+'_avg'] = corr.loc[:, corr.columns.isin(metric_cols)].mean(axis=1)
-
-        avg_cols = [col for col in corr.columns if col.endswith('_avg')]
-
-        benchmark_result_cols = [col for col in corr.columns if col.startswith('inductive')
-                                or col.startswith('heu') or col.startswith('ilp')]
-
-        corr = corr[:][~corr.index.isin(benchmark_result_cols)]
-
-        fig, axes = plt.subplots( 1, len(avg_cols), figsize=(15,10))
-
-        for i, ax in enumerate(axes):
-            cbar = True if i==3 else False
-            corr = corr.sort_values(avg_cols[i], axis=0, ascending=False)
-            b= sns.heatmap(corr[[avg_cols[i]]][:],
-                        ax=ax,
-                        xticklabels=[avg_cols[i]],
-                        yticklabels=corr.index,
-                        cbar=cbar)
-        plt.subplots_adjust(wspace = 1, top=0.9, left=0.15)
-        fig.suptitle(f"Feature and performance correlation per {mean.split('s')[0]} for {len(benchmark)} event-logs")
-        if output_path != None:
-            output_path = output_path+f"/minperf_corr_{mean.split('s')[0]}_el{len(benchmark)}.jpg"
-            fig.savefig(output_path)
-            print(f"SUCCESS: Saved correlation plot at {output_path}")
-        #plt.show()
-
-    def plot_miners_correlation(self, benchmark, output_path=None):
-        benchmark_result_cols = [col for col in benchmark.columns if col.startswith('inductive')
-                                or col.startswith('heu') or col.startswith('ilp')]
-        df = benchmark.loc[:, benchmark.columns!='log']
-        df = df.loc[:, df.columns.isin(benchmark_result_cols)]
-
-        corr = df.corr()
-        fig, ax = plt.subplots(figsize=(15,10))
-        b= sns.heatmap(corr,
-                    ax=ax,
-                    xticklabels=corr.columns.values,
-                    yticklabels=corr.columns.values)
-        plt.title(f"Miners and performance correlation for {len(benchmark)} event-logs", loc='center')
-        if output_path != None:
-            output_path = output_path+f"/minperf_corr_el{len(benchmark)}.jpg"
-            fig.savefig(output_path)
-            print(f"SUCCESS: Saved correlation plot at {output_path}")
-        #plt.show()
-
 class FeaturesPlotter:
     def __init__(self, features, params=None):
         output_path = params[OUTPUT_PATH] if OUTPUT_PATH in params else None
