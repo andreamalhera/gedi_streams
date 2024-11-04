@@ -202,30 +202,55 @@ class GenerateEventLogs():
 
         if 'ratio_variants_per_number_of_traces' in self.tasks.columns:#HOTFIX
             self.tasks=self.tasks.rename(columns={"ratio_variants_per_number_of_traces": "ratio_unique_traces_per_trace"})
+
+        if self.config_space is None:
+            self.config_space = ConfigurationSpace({
+                "mode": (5, 40),
+                "sequence": (0.01, 1),
+                "choice": (0.01, 1),
+                "parallel": (0.01, 1),
+                "loop": (0.01, 1),
+                "silent": (0.01, 1),
+                "lt_dependency": (0.01, 1),
+                "num_traces": (100, 1001),
+                "duplicate": (0),
+                "or": (0),
+            })
+            print(f"WARNING: No config_space specified in config file. Continuing with {self.config_space}")
+        else:
+            configspace_lists = self.config_space
+            configspace_tuples = {}
+            for k, v in configspace_lists.items():
+                if len(v) == 1:
+                    configspace_tuples[k] = v[0]
+                else:
+                    configspace_tuples[k] = tuple(v)
+            self.config_space = ConfigurationSpace(configspace_tuples)
+
+        if self.n_trials is None:
+            self.n_trials = 20
+            print(f"INFO: Running with n_trials={n_trials}")
+        else:
+            self.n_trials = self.n_trials
         return
 
-    def generator_wrapper(self, task, embedded_generator='OTHER'):
-        try:
-            identifier = [x for x in task[1] if isinstance(x, str)][0]
-        except IndexError:
-            identifier = task[0]+1
-        task = task[1].loc[lambda x, identifier=identifier: x!=identifier]
-        self.objectives = task.dropna().to_dict()
+    def generator_wrapper(self, task_tuple, embedded_generator='OTHER'):
+        task = self.GeneratorTask(task_tuple, self)
         random.seed(RANDOM_SEED)
-        self.configs = self.optimize()
+        task.configs = task.optimize()
 
         random.seed(RANDOM_SEED)
-        if isinstance(self.configs, list):
-            log_config = self.generate_optimized_log(self.configs[0])
+        if isinstance(task.configs, list):
+            log_config = task.generate_optimized_log(task.configs[0])
         else:
-            log_config = self.generate_optimized_log(self.configs)
+            log_config = task.generate_optimized_log(task.configs)
 
-        identifier = 'genEL'+str(identifier)
+        identifier = 'genEL'+str(task.identifier)
         #TODO: Replace hotfix
-        if self.objectives.get('ratio_unique_traces_per_trace'):#HOTFIX
-            self.objectives['ratio_variants_per_number_of_traces']=self.objectives.pop('ratio_unique_traces_per_trace')
+        if task.objectives.get('ratio_unique_traces_per_trace'):#HOTFIX
+            task.objectives['ratio_variants_per_number_of_traces']=task.objectives.pop('ratio_unique_traces_per_trace')
 
-        save_path = get_output_key_value_location(task.to_dict(),
+        save_path = get_output_key_value_location(task.task_series.to_dict(),
                                          self.output_path, identifier, self.feature_keys)+".xes"
 
         write_xes(log_config['log'], save_path)
@@ -239,144 +264,128 @@ class GenerateEventLogs():
         features_to_dump['log']= os.path.split(save_path)[1].split(".")[0]
         # calculating the manhattan distance of the generated log to the target features
         #features_to_dump['distance_to_target'] = calculate_manhattan_distance(self.objectives, features_to_dump)
-        features_to_dump['target_similarity'] = compute_similarity(self.objectives, features_to_dump)
+        features_to_dump['target_similarity'] = compute_similarity(task.objectives, features_to_dump)
         dump_features_json(features_to_dump, save_path)
 
         return log_config
 
-    def generate_optimized_log(self, config):
-        ''' Returns event log from given configuration'''
-        tree = generate_process_tree(parameters={
-            "min": config["mode"],
-            "max": config["mode"],
-            "mode": config["mode"],
-            "sequence": config["sequence"],
-            "choice": config["choice"],
-            "parallel": config["parallel"],
-            "loop": config["loop"],
-            "silent": config["silent"],
-            "lt_dependency": config["lt_dependency"],
-            "duplicate": config["duplicate"],
-            "or": config["or"],
-            "no_models": 1
-        })
-        log = play_out(tree, parameters={"num_traces": config["num_traces"]})
+    class GeneratorTask():
+        def __init__(self, task_tuple, generator):
+            try:
+                self.identifier = [x for x in task_tuple[1] if isinstance(x, str)][0]
+            except IndexError:
+                self.identifier = task_tuple[0]+1
+            self.task_series = task_tuple[1].loc[lambda x, identifier=self.identifier: x!=identifier]
+            self.objectives = self.task_series.dropna().to_dict()
+            self.config_space = generator.config_space
+            self.n_trials = generator.n_trials
+            self.configs = {}
+            return
 
-        for i, trace in enumerate(log):
-            trace.attributes['concept:name'] = str(i)
-            for j, event in enumerate(trace):
-                event['time:timestamp'] = dt.now()
-                event['lifecycle:transition'] = "complete"
-        random.seed(RANDOM_SEED)
-        metafeatures = self.compute_metafeatures(log)
-        return {
-            "configuration": config,
-            "log": log,
-            "metafeatures": metafeatures,
-        }
+        def optimize(self):
+            objectives = [*self.objectives.keys()]
 
-    def gen_log(self, config: Configuration, seed: int = 0):
-        random.seed(RANDOM_SEED)
-        tree = generate_process_tree(parameters={
-            "min": config["mode"],
-            "max": config["mode"],
-            "mode": config["mode"],
-            "sequence": config["sequence"],
-            "choice": config["choice"],
-            "parallel": config["parallel"],
-            "loop": config["loop"],
-            "silent": config["silent"],
-            "lt_dependency": config["lt_dependency"],
-            "duplicate": config["duplicate"],
-            "or": config["or"],
-            "no_models": 1
-        })
-        random.seed(RANDOM_SEED)
-        log = play_out(tree, parameters={"num_traces": config["num_traces"]})
-        random.seed(RANDOM_SEED)
-        result = self.eval_log(log)
-        return result
-
-    def compute_metafeatures(self, log):
-        for i, trace in enumerate(log):
-            trace.attributes['concept:name'] = str(i)
-            for j, event in enumerate(trace):
-                event['time:timestamp'] = dt.fromtimestamp(j * 1000)
-                event['lifecycle:transition'] = "complete"
-
-        metafeatures_computation = {}
-        for ft_name in self.objectives.keys():
-            ft_type = feature_type(ft_name)
-            metafeatures_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
-        return metafeatures_computation
-
-    def eval_log(self, log):
-        random.seed(RANDOM_SEED)
-        metafeatures = self.compute_metafeatures(log)
-        log_evaluation = {}
-        for key in self.objectives.keys():
-            log_evaluation[key] = abs(self.objectives[key] - metafeatures[key])
-        return log_evaluation
-
-    def optimize(self):
-        if self.config_space is None:
-            configspace = ConfigurationSpace({
-                "mode": (5, 40),
-                "sequence": (0.01, 1),
-                "choice": (0.01, 1),
-                "parallel": (0.01, 1),
-                "loop": (0.01, 1),
-                "silent": (0.01, 1),
-                "lt_dependency": (0.01, 1),
-                "num_traces": (100, 1001),
-                "duplicate": (0),
-                "or": (0),
-            })
-            print(f"WARNING: No config_space specified in config file. Continuing with {configspace}")
-        else:
-            configspace_lists = self.config_space
-            configspace_tuples = {}
-            for k, v in configspace_lists.items():
-                if len(v) == 1:
-                    configspace_tuples[k] = v[0]
-                else:
-                    configspace_tuples[k] = tuple(v)
-            configspace = ConfigurationSpace(configspace_tuples)
-
-        if self.n_trials is None:
-            self.n_trials = 20
-            print(f"INFO: Running with n_trials={n_trials}")
-        else:
-            self.n_trials = self.n_trials
-
-        objectives = [*self.objectives.keys()]
-
-        # Scenario object specifying the multi-objective optimization environment
-        scenario = Scenario(
-            configspace,
-            deterministic=True,
-            n_trials=n_trials,
-            objectives=objectives,
-            n_workers=-1
-        )
-
-        # Use SMAC to find the best configuration/hyperparameters
-        random.seed(RANDOM_SEED)
-        multi_obj = HyperparameterOptimizationFacade.get_multi_objective_algorithm(
-                scenario,
-                objective_weights=[1]*len(self.objectives),
+            # Scenario object specifying the multi-objective optimization environment
+            scenario = Scenario(
+                self.config_space,
+                deterministic=True,
+                n_trials=self.n_trials,
+                objectives=objectives,
+                n_workers=-1
             )
 
+            # Use SMAC to find the best configuration/hyperparameters
+            random.seed(RANDOM_SEED)
+            multi_obj = HyperparameterOptimizationFacade.get_multi_objective_algorithm(
+                    scenario,
+                    objective_weights=[1]*len(self.objectives),
+                )
 
-        random.seed(RANDOM_SEED)
-        smac = HyperparameterOptimizationFacade(
-            scenario=scenario,
-            target_function=self.gen_log,
-            multi_objective_algorithm=multi_obj,
-            # logging_level=False,
-            overwrite=True,
-        )
 
-        random.seed(RANDOM_SEED)
-        incumbent = smac.optimize()
-        return incumbent
+            random.seed(RANDOM_SEED)
+            smac = HyperparameterOptimizationFacade(
+                scenario=scenario,
+                target_function=self.gen_log,
+                multi_objective_algorithm=multi_obj,
+                # logging_level=False,
+                overwrite=True,
+            )
+
+            random.seed(RANDOM_SEED)
+            incumbent = smac.optimize()
+            return incumbent
+
+        def gen_log(self, config: Configuration, seed: int = 0):
+            random.seed(RANDOM_SEED)
+            tree = generate_process_tree(parameters={
+                "min": config["mode"],
+                "max": config["mode"],
+                "mode": config["mode"],
+                "sequence": config["sequence"],
+                "choice": config["choice"],
+                "parallel": config["parallel"],
+                "loop": config["loop"],
+                "silent": config["silent"],
+                "lt_dependency": config["lt_dependency"],
+                "duplicate": config["duplicate"],
+                "or": config["or"],
+                "no_models": 1
+            })
+            random.seed(RANDOM_SEED)
+            log = play_out(tree, parameters={"num_traces": config["num_traces"]})
+            random.seed(RANDOM_SEED)
+            result = self.eval_log(log)
+            return result
+
+        def eval_log(self, log):
+            random.seed(RANDOM_SEED)
+            metafeatures = self.compute_metafeatures(log)
+            log_evaluation = {}
+            for key in self.objectives.keys():
+                log_evaluation[key] = abs(self.objectives[key] - metafeatures[key])
+            return log_evaluation
+
+        def compute_metafeatures(self, log):
+            for i, trace in enumerate(log):
+                trace.attributes['concept:name'] = str(i)
+                for j, event in enumerate(trace):
+                    event['time:timestamp'] = dt.fromtimestamp(j * 1000)
+                    event['lifecycle:transition'] = "complete"
+
+            metafeatures_computation = {}
+            for ft_name in self.objectives.keys():
+                ft_type = feature_type(ft_name)
+                metafeatures_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
+            return metafeatures_computation
+
+
+        def generate_optimized_log(self, config):
+            ''' Returns event log from given configuration'''
+            tree = generate_process_tree(parameters={
+                "min": config["mode"],
+                "max": config["mode"],
+                "mode": config["mode"],
+                "sequence": config["sequence"],
+                "choice": config["choice"],
+                "parallel": config["parallel"],
+                "loop": config["loop"],
+                "silent": config["silent"],
+                "lt_dependency": config["lt_dependency"],
+                "duplicate": config["duplicate"],
+                "or": config["or"],
+                "no_models": 1
+            })
+            log = play_out(tree, parameters={"num_traces": config["num_traces"]})
+
+            for i, trace in enumerate(log):
+                trace.attributes['concept:name'] = str(i)
+                for j, event in enumerate(trace):
+                    event['time:timestamp'] = dt.now()
+                    event['lifecycle:transition'] = "complete"
+            random.seed(RANDOM_SEED)
+            metafeatures = self.compute_metafeatures(log)
+            return {
+                "configuration": config,
+                "log": log,
+                "metafeatures": metafeatures,
+            }
