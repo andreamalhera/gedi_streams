@@ -2,6 +2,9 @@ import multiprocessing
 import os
 import pandas as pd
 import random
+import re
+import xml.etree.ElementTree as ET
+
 from ConfigSpace import Configuration, ConfigurationSpace
 from datetime import datetime as dt
 from feeed.activities import Activities as activities
@@ -23,27 +26,8 @@ from gedi.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG
 from gedi.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
 from gedi.utils.io_helpers import read_csvs
 from gedi.utils.column_mappings import column_mappings
-import xml.etree.ElementTree as ET
-import re
 from xml.dom import minidom
 
-"""
-   Parameters
-    --------------
-    parameters
-        Parameters of the algorithm, according to the paper:
-        - Parameters.MODE: most frequent number of visible activities
-        - Parameters.MIN: minimum number of visible activities
-        - Parameters.MAX: maximum number of visible activities
-        - Parameters.SEQUENCE: probability to add a sequence operator to tree
-        - Parameters.CHOICE: probability to add a choice operator to tree
-        - Parameters.PARALLEL: probability to add a parallel operator to tree
-        - Parameters.LOOP: probability to add a loop operator to tree
-        - Parameters.OR: probability to add an or operator to tree
-        - Parameters.SILENT: probability to add silent activity to a choice or loop operator
-        - Parameters.DUPLICATE: probability to duplicate an activity label
-        - Parameters.NO_MODELS: number of trees to generate from model population
-"""
 RANDOM_SEED = 10
 random.seed(RANDOM_SEED)
 
@@ -279,7 +263,9 @@ class GenerateEventLogs():
             self.objectives = self.task_series.dropna().to_dict()
             self.config_space = generator.config_space
             self.n_trials = generator.n_trials
+            self.generator = generator
             self.configs = {}
+
             return
 
         def optimize(self):
@@ -317,22 +303,8 @@ class GenerateEventLogs():
 
         def gen_log(self, config: Configuration, seed: int = 0):
             random.seed(RANDOM_SEED)
-            tree = generate_process_tree(parameters={
-                "min": config["mode"],
-                "max": config["mode"],
-                "mode": config["mode"],
-                "sequence": config["sequence"],
-                "choice": config["choice"],
-                "parallel": config["parallel"],
-                "loop": config["loop"],
-                "silent": config["silent"],
-                "lt_dependency": config["lt_dependency"],
-                "duplicate": config["duplicate"],
-                "or": config["or"],
-                "no_models": 1
-            })
-            random.seed(RANDOM_SEED)
-            log = play_out(tree, parameters={"num_traces": config["num_traces"]})
+            model = self.create_ProcessModel(config)
+            log = play_out(model, parameters={"num_traces": config["num_traces"]})
             random.seed(RANDOM_SEED)
             result = self.eval_log(log)
             return result
@@ -358,9 +330,55 @@ class GenerateEventLogs():
                 metafeatures_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
             return metafeatures_computation
 
-
         def generate_optimized_log(self, config):
             ''' Returns event log from given configuration'''
+            model = self.create_ProcessModel(config)
+            log = play_out(model, parameters={"num_traces": config["num_traces"]})
+
+            for i, trace in enumerate(log):
+                trace.attributes['concept:name'] = str(i)
+                for j, event in enumerate(trace):
+                    event['time:timestamp'] = dt.now()
+                    event['lifecycle:transition'] = "complete"
+            random.seed(RANDOM_SEED)
+            metafeatures = self.compute_metafeatures(log)
+            return {
+                "configuration": config,
+                "log": log,
+                "metafeatures": metafeatures,
+            }
+
+        def create_ProcessModel(self, config):
+            random.seed(RANDOM_SEED)
+            if self.generator.embedded_generator == 'PTLG':
+                model = self.create_PTLG(config)
+            elif self.generator.embedded_generator == 'DEF':
+                model = self.create_DEF(config)
+            else:
+                raise NotImplementedError(f"Embedded generator {self.generator.embedded_generator} not implemented.")
+            return model
+
+        def create_DEF(self, config):
+            pass #TODO: Generate DEF model here.
+
+        def create_PTLG(selfi, config):
+            """
+            Parameters
+                --------------
+                parameters
+                    Parameters of the algorithm, according to the paper:
+                    - Parameters.MODE: most frequent number of visible activities
+                    - Parameters.MIN: minimum number of visible activities
+                    - Parameters.MAX: maximum number of visible activities
+                    - Parameters.SEQUENCE: probability to add a sequence operator to tree
+                    - Parameters.CHOICE: probability to add a choice operator to tree
+                    - Parameters.PARALLEL: probability to add a parallel operator to tree
+                    - Parameters.LOOP: probability to add a loop operator to tree
+                    - Parameters.OR: probability to add an or operator to tree
+                    - Parameters.SILENT: probability to add silent activity to a choice or loop operator
+                    - Parameters.DUPLICATE: probability to duplicate an activity label
+                    - Parameters.NO_MODELS: number of trees to generate from model population
+            """
             tree = generate_process_tree(parameters={
                 "min": config["mode"],
                 "max": config["mode"],
@@ -375,17 +393,5 @@ class GenerateEventLogs():
                 "or": config["or"],
                 "no_models": 1
             })
-            log = play_out(tree, parameters={"num_traces": config["num_traces"]})
+            return tree
 
-            for i, trace in enumerate(log):
-                trace.attributes['concept:name'] = str(i)
-                for j, event in enumerate(trace):
-                    event['time:timestamp'] = dt.now()
-                    event['lifecycle:transition'] = "complete"
-            random.seed(RANDOM_SEED)
-            metafeatures = self.compute_metafeatures(log)
-            return {
-                "configuration": config,
-                "log": log,
-                "metafeatures": metafeatures,
-            }
