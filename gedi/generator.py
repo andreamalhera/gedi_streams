@@ -141,6 +141,8 @@ class GenerateEventLogs():
         start = dt.now()
         if params.get(EMBEDDED_GENERATOR) is None:
             self.embedded_generator = 'PTLG'
+        else:
+            self.embedded_generator = params.get(EMBEDDED_GENERATOR)
 
         if params.get(OUTPUT_PATH) is None:
             self.output_path = 'data/generated'
@@ -168,11 +170,12 @@ class GenerateEventLogs():
         if tasks is not None:
             self.feature_keys = sorted([feature for feature in tasks.columns.tolist() if feature != "log"])
             num_cores = multiprocessing.cpu_count() if len(tasks) >= multiprocessing.cpu_count() else len(tasks)
-            #self.generator_wrapper([*tasks.iterrows()][0])# For testing
+            self.generator_wrapper([*tasks.iterrows()][0], self.embedded_generator)# For testing
             with multiprocessing.Pool(num_cores) as p:
                 print(f"INFO: Generator starting at {start.strftime('%H:%M:%S')} using {num_cores} cores for {len(tasks)} tasks...")
                 random.seed(RANDOM_SEED)
-                log_config = p.map(self.generator_wrapper, [(index, row) for index, row in tasks.iterrows()])
+                log_config = p.map(partial(self.generator_wrapper, [(index, row) for index, row in tasks.iterrows()]),
+                                   self.embedded_generator)
             self.log_config = log_config
 
         else:
@@ -195,7 +198,7 @@ class GenerateEventLogs():
         print(f"         Saved generated logs in {self.output_path}")
         print("========================= ~ Generator ==========================")
 
-    def generator_wrapper(self, task):
+    def generator_wrapper(self, task, embedded_generator='PTLG'):
         try:
             identifier = [x for x in task[1] if isinstance(x, str)][0]
         except IndexError:
