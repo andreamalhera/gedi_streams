@@ -4,8 +4,8 @@ from datetime import datetime as dt
 from gedi.generator import GenerateEventLogs
 from gedi.features import EventLogFeatures
 from gedi.plotter import FeaturesPlotter, GenerationPlotter
+from gedi.utils.param_keys import *
 from utils.default_argparse import ArgParser
-from utils.param_keys import *
 
 def run(kwargs:dict, model_params_list: list, filename_list:list):
     """

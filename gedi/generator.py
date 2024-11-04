@@ -17,11 +17,11 @@ from pm4py import generate_process_tree
 from pm4py import write_xes
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
-from utils.param_keys import OUTPUT_PATH, INPUT_PATH
-from utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS
+from gedi.utils.param_keys import OUTPUT_PATH, INPUT_PATH
+from gedi.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, EMBEDDED_GENERATOR
 from gedi.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
 from gedi.utils.io_helpers import read_csvs
-from utils.column_mappings import column_mappings
+from gedi.utils.column_mappings import column_mappings
 import xml.etree.ElementTree as ET
 import re
 from xml.dom import minidom
@@ -139,6 +139,9 @@ class GenerateEventLogs():
         print("=========================== Generator ==========================")
         print(f"INFO: Running with {params}")
         start = dt.now()
+        if params.get(EMBEDDED_GENERATOR) is None:
+            self.embedded_generator = 'PTLG'
+
         if params.get(OUTPUT_PATH) is None:
             self.output_path = 'data/generated'
         else:
