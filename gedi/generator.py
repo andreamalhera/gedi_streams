@@ -13,6 +13,7 @@ from feeed.simple_stats import SimpleStats as simple_stats
 from feeed.start_activities import StartActivities as start_activities
 from feeed.trace_length import TraceLength as trace_length
 from feeed.trace_variant import TraceVariant as trace_variant
+from functools import partial
 from pm4py import generate_process_tree
 from pm4py import write_xes
 from pm4py.sim import play_out
@@ -139,6 +140,45 @@ class GenerateEventLogs():
         print("=========================== Generator ==========================")
         print(f"INFO: Running with {params}")
         start = dt.now()
+        print(f"INFO: Running with {params}")
+        self._parse_params(params)
+
+        if self.output_path.endswith('csv'):
+            self.log_config = pd.read_csv(self.output_path)
+            return
+
+        if self.tasks is not None:
+            self.feature_keys = sorted([feature for feature in self.tasks.columns.tolist() if feature != "log"])
+            num_cores = multiprocessing.cpu_count() if len(self.tasks) >= multiprocessing.cpu_count() else len(self.tasks)
+            #self.generator_wrapper([*self.tasks.iterrows()][0], self.embedded_generator)# For testing
+            with multiprocessing.Pool(num_cores) as p:
+                print(f"INFO: Generator starting at {start.strftime('%H:%M:%S')} using {num_cores} cores for {len(self.tasks)} tasks...")
+                random.seed(RANDOM_SEED)
+                log_config = p.map(partial(self.generator_wrapper, embedded_generator=self.embedded_generator)
+                                   ,[(index, row) for index, row in self.tasks.iterrows()])
+            self.log_config = log_config
+
+        else:
+            random.seed(RANDOM_SEED)
+            self.configs = self.optimize()
+            if type(self.configs) is not list:
+                self.configs = [self.configs]
+            temp = self.generate_optimized_log(self.configs[0])
+            self.log_config = [temp]
+            #TODO: Replace hotfix
+            if self.experiment.get('ratio_unique_traces_per_trace'):#HOTFIX
+                self.experiment['ratio_variants_per_number_of_traces']=self.experiment.pop('ratio_unique_traces_per_trace')
+
+            save_path = get_output_key_value_location(self.experiment,
+                                             self.output_path, "genEL")+".xes"
+            write_xes(temp['log'], save_path)
+            add_extension_before_traces(save_path)
+            print("SUCCESS: Saved generated event log in", save_path)
+        print(f"SUCCESS: Generator took {dt.now()-start} sec. Generated {len(self.log_config)} event logs.")
+        print(f"         Saved generated logs in {self.output_path}")
+        print("========================= ~ Generator ==========================")
+
+    def _parse_params(self, params):
         if params.get(EMBEDDED_GENERATOR) is None:
             self.embedded_generator = 'PTLG'
         else:
@@ -151,54 +191,20 @@ class GenerateEventLogs():
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path, exist_ok=True)
 
-        if self.output_path.endswith('csv'):
-            self.log_config = pd.read_csv(self.output_path)
-            return
-
-        self.params = params.get(GENERATOR_PARAMS)
-        experiment = self.params.get(EXPERIMENT)
-
-        if experiment is not None:
-            tasks, output_path = get_tasks(experiment, self.output_path)
-            columns_to_rename = {col: column_mappings()[col] for col in tasks.columns if col in column_mappings()}
-            tasks = tasks.rename(columns=columns_to_rename)
+        self.config_space = params.get(GENERATOR_PARAMS).get(CONFIG_SPACE)
+        self.n_trials = params.get(GENERATOR_PARAMS).get(N_TRIALS)
+        self.experiment = params.get(GENERATOR_PARAMS).get(EXPERIMENT)
+        if self.experiment is not None:
+            self.tasks, output_path = get_tasks(self.experiment, self.output_path)
+            columns_to_rename = {col: column_mappings()[col] for col in self.tasks.columns if col in column_mappings()}
+            self.tasks = self.tasks.rename(columns=columns_to_rename)
             self.output_path = output_path
 
-        if 'ratio_variants_per_number_of_traces' in tasks.columns:#HOTFIX
-            tasks=tasks.rename(columns={"ratio_variants_per_number_of_traces": "ratio_unique_traces_per_trace"})
+        if 'ratio_variants_per_number_of_traces' in self.tasks.columns:#HOTFIX
+            self.tasks=self.tasks.rename(columns={"ratio_variants_per_number_of_traces": "ratio_unique_traces_per_trace"})
+        return
 
-        if tasks is not None:
-            self.feature_keys = sorted([feature for feature in tasks.columns.tolist() if feature != "log"])
-            num_cores = multiprocessing.cpu_count() if len(tasks) >= multiprocessing.cpu_count() else len(tasks)
-            self.generator_wrapper([*tasks.iterrows()][0], self.embedded_generator)# For testing
-            with multiprocessing.Pool(num_cores) as p:
-                print(f"INFO: Generator starting at {start.strftime('%H:%M:%S')} using {num_cores} cores for {len(tasks)} tasks...")
-                random.seed(RANDOM_SEED)
-                log_config = p.map(partial(self.generator_wrapper, [(index, row) for index, row in tasks.iterrows()]),
-                                   self.embedded_generator)
-            self.log_config = log_config
-
-        else:
-            random.seed(RANDOM_SEED)
-            self.configs = self.optimize()
-            if type(self.configs) is not list:
-                self.configs = [self.configs]
-            temp = self.generate_optimized_log(self.configs[0])
-            self.log_config = [temp]
-            #TODO: Replace hotfix
-            if self.params[EXPERIMENT].get('ratio_unique_traces_per_trace'):#HOTFIX
-                self.params[EXPERIMENT]['ratio_variants_per_number_of_traces']=self.params[EXPERIMENT].pop('ratio_unique_traces_per_trace')
-
-            save_path = get_output_key_value_location(self.params[EXPERIMENT],
-                                             self.output_path, "genEL")+".xes"
-            write_xes(temp['log'], save_path)
-            add_extension_before_traces(save_path)
-            print("SUCCESS: Saved generated event log in", save_path)
-        print(f"SUCCESS: Generator took {dt.now()-start} sec. Generated {len(self.log_config)} event logs.")
-        print(f"         Saved generated logs in {self.output_path}")
-        print("========================= ~ Generator ==========================")
-
-    def generator_wrapper(self, task, embedded_generator='PTLG'):
+    def generator_wrapper(self, task, embedded_generator='OTHER'):
         try:
             identifier = [x for x in task[1] if isinstance(x, str)][0]
         except IndexError:
@@ -313,7 +319,7 @@ class GenerateEventLogs():
         return log_evaluation
 
     def optimize(self):
-        if self.params.get(CONFIG_SPACE) is None:
+        if self.config_space is None:
             configspace = ConfigurationSpace({
                 "mode": (5, 40),
                 "sequence": (0.01, 1),
@@ -328,7 +334,7 @@ class GenerateEventLogs():
             })
             print(f"WARNING: No config_space specified in config file. Continuing with {configspace}")
         else:
-            configspace_lists = self.params[CONFIG_SPACE]
+            configspace_lists = self.config_space
             configspace_tuples = {}
             for k, v in configspace_lists.items():
                 if len(v) == 1:
@@ -337,11 +343,11 @@ class GenerateEventLogs():
                     configspace_tuples[k] = tuple(v)
             configspace = ConfigurationSpace(configspace_tuples)
 
-        if self.params.get(N_TRIALS) is None:
-            n_trials = 20
+        if self.n_trials is None:
+            self.n_trials = 20
             print(f"INFO: Running with n_trials={n_trials}")
         else:
-            n_trials = self.params[N_TRIALS]
+            self.n_trials = self.n_trials
 
         objectives = [*self.objectives.keys()]
 
