@@ -124,7 +124,6 @@ class GenerateEventLogs():
         print("=========================== Generator ==========================")
         print(f"INFO: Running with {params}")
         start = dt.now()
-        print(f"INFO: Running with {params}")
         self._parse_params(params)
 
         if self.output_path.endswith('csv'):
@@ -379,6 +378,7 @@ class GenerateEventLogs():
                     - Parameters.DUPLICATE: probability to duplicate an activity label
                     - Parameters.NO_MODELS: number of trees to generate from model population
             """
+            random.seed(RANDOM_SEED)
             tree = generate_process_tree(parameters={
                 "min": config["mode"],
                 "max": config["mode"],
