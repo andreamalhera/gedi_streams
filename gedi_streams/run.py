@@ -1,10 +1,10 @@
 import config
 import pandas as pd
 from datetime import datetime as dt
-from gedi.generator import GenerateEventLogs
-from gedi.features import EventLogFeatures
-from gedi.plotter import FeaturesPlotter, GenerationPlotter
-from gedi.utils.param_keys import *
+from gedi_streams.generator import GenerateEventLogs
+from gedi_streams.features import EventLogFeatures
+from gedi_streams.plotter import FeaturesPlotter, GenerationPlotter
+from gedi_streams.utils.param_keys import *
 from utils.default_argparse import ArgParser
 
 def run(kwargs:dict, model_params_list: list, filename_list:list):

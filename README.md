@@ -1,5 +1,5 @@
 <p>
-  <img src="gedi/utils/logo.png" alt="Logo" width="100" align="left" />
+  <img src="gedi_streams/utils/logo.png" alt="Logo" width="100" align="left" />
   <h1 style="display: inline;">GEDI Streams</h1>
 </p>
 
@@ -27,21 +27,21 @@ brew install swig
 conda install pyrfr swig
 ```
 ## Installation
-To directly use GEDI methods via `import gedi`, install directly from [PyPi](https://pypi.org/project/gedi/).
+To directly use GEDI Streams methods via `import gedi_streams`, install directly from [PyPi](https://pypi.org/project/gedi/).
 ```console
-pip install gedi
+pip install gedi_streams
 ```
 Alternatively, you can create an environment with
 - `conda env create -f .conda.yml`
 
 Run:
 ```console
-python -c "from gedi import gedi; gedi('config_files/pipeline_steps/generation.json')"
+python -c "from gedi_streams import gedi_streams; gedi_streams('config_files/pipeline_steps/generation.json')"
 ```
 or
 
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/test/experiment_test.json
 ```
 The last step should take only a few minutes to run.
@@ -50,11 +50,11 @@ The last step should take only a few minutes to run.
 Our pipeline offers several pipeline steps, which can be run sequentially or partially ordered:
 - [Feature Extraction](#feature-extraction)
 - [Generation](#generation)
-- [Evaluation Plotter](https://github.com/lmu-dbs/gedi/blob/16-documentation-update-readme/README.md#evaluation-plotting)
+- [Evaluation Plotter](https://github.com/lmu-dbs/gedi_streams/blob/16-documentation-update-readme/README.md#evaluation-plotting)
 
-To run different steps of the GEDI pipeline, please adapt the `.json` accordingly.
+To run different steps of the GEDI Streams  pipeline, please adapt the `.json` accordingly.
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/pipeline_steps/<pipeline-step>.json
 ```
 For reference of possible keys and values for each step, please see `config_files/test/experiment_test.json`.
@@ -65,7 +65,7 @@ To reproduce results from our paper, please refer to [Experiments](#experiments)
 ---
 To extract the features on the event-log level and use them for hyperparameter optimization, we employ the following script:
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/pipeline_steps/feature_extraction.json
 ```
 The JSON file consists of the following key-value pairs:
@@ -86,7 +86,7 @@ After having extracted meta features from the files, the next step is to generat
 The command to execute the generation step is given by a exemplarily generation.json file:
 
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/pipeline_steps/generation.json
 ```
 
@@ -334,7 +334,7 @@ In case of manually defining the targets for the features in config space, the f
 The purpose of the evaluation plotting step is used just for visualization. Some examples of how the plotter can be used is shown in the following exemplarily script:
 
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/pipeline_steps/evaluation_plotter.json
 ```
 
@@ -354,7 +354,7 @@ We present two settings for generating intentional event logs, using [real targe
 To execute the experiments with real targets, we employ the [experiment_real_targets.json](config_files/experiment_real_targets.json). The script's pipeline will output the [generated event logs (GenBaselineED)](data/event_logs/GenBaselineED), which optimize their feature values towards [real-world event data features](data/BaselineED_feat.csv), alongside their respectively measured [feature values](data/GenBaselineED_feat.csv) and [benchmark metrics values](data/GenBaselineED_bench.csv).
 
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/experiment_real_targets.json
 ```
 
