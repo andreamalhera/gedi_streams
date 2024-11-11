@@ -21,11 +21,11 @@ from pm4py import generate_process_tree
 from pm4py import write_xes
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
-from gedi.utils.param_keys import OUTPUT_PATH, INPUT_PATH
-from gedi.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, EMBEDDED_GENERATOR
-from gedi.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
-from gedi.utils.io_helpers import read_csvs
-from gedi.utils.column_mappings import column_mappings
+from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
+from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, EMBEDDED_GENERATOR
+from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
+from gedi_streams.utils.io_helpers import read_csvs
+from gedi_streams.utils.column_mappings import column_mappings
 from xml.dom import minidom
 
 RANDOM_SEED = 10

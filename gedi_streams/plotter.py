@@ -19,7 +19,7 @@ from collections import defaultdict
 
 from sklearn.preprocessing import Normalizer, StandardScaler
 from sklearn.decomposition import PCA
-from gedi_streams.generator import get_tasks
+from gedi_streams.generator.generator import get_tasks
 from gedi_streams.utils.io_helpers import get_keys_abbreviation
 from gedi_streams.utils.io_helpers import read_csvs, select_instance
 
