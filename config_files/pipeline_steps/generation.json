@@ -2,6 +2,7 @@
   {
     "pipeline_step": "event_logs_generation",
     "output_path": "output",
+    "embedded_generator": "PTLG",
     "generator_params": {
       "experiment": {"input_path": "data/test/grid_feat.csv",
         "objectives": ["ratio_top_20_variants", "epa_normalized_sequence_entropy_linear_forgetting"]
