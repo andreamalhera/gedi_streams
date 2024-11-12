@@ -17,15 +17,16 @@ from feeed.start_activities import StartActivities as start_activities
 from feeed.trace_length import TraceLength as trace_length
 from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
-from pm4py import generate_process_tree
 from pm4py import write_xes
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
-from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, EMBEDDED_GENERATOR
+from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, PLAYOUT_METHOD
 from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
 from gedi_streams.utils.io_helpers import read_csvs
 from gedi_streams.utils.column_mappings import column_mappings
+from gedi_streams.generator.model import create_PTLG
+from gedi_streams.generator.playout import play_out_DEF
 from xml.dom import minidom
 
 RANDOM_SEED = 10
@@ -58,7 +59,6 @@ def get_tasks(experiment, output_path="", reference_feature=None):
     else:
         raise FileNotFoundError(f"{experiment} not found. Please check path in filesystem.")
     return tasks, output_path
-
 
 def removeextralines(elem):
     hasWords = re.compile("\\w")
@@ -133,11 +133,11 @@ class GenerateEventLogs():
         if self.tasks is not None:
             self.feature_keys = sorted([feature for feature in self.tasks.columns.tolist() if feature != "log"])
             num_cores = multiprocessing.cpu_count() if len(self.tasks) >= multiprocessing.cpu_count() else len(self.tasks)
-            #self.generator_wrapper([*self.tasks.iterrows()][0], self.embedded_generator)# For testing
+            #self.generator_wrapper([*self.tasks.iterrows()][0], self.playout_method)# For testing
             with multiprocessing.Pool(num_cores) as p:
                 print(f"INFO: Generator starting at {start.strftime('%H:%M:%S')} using {num_cores} cores for {len(self.tasks)} tasks...")
                 random.seed(RANDOM_SEED)
-                log_config = p.map(partial(self.generator_wrapper, embedded_generator=self.embedded_generator)
+                log_config = p.map(partial(self.generator_wrapper, PLAYOUT_METHOD=self.playout_method)
                                    ,[(index, row) for index, row in self.tasks.iterrows()])
             self.log_config = log_config
 
@@ -162,17 +162,17 @@ class GenerateEventLogs():
         print("========================= ~ Generator ==========================")
 
     def _parse_params(self, params):
-        if params.get(EMBEDDED_GENERATOR) is None:
-            self.embedded_generator = 'PTLG'
-        else:
-            self.embedded_generator = params.get(EMBEDDED_GENERATOR)
-
         if params.get(OUTPUT_PATH) is None:
             self.output_path = 'data/generated'
         else:
             self.output_path = params.get(OUTPUT_PATH)
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path, exist_ok=True)
+
+        if params.get(GENERATOR_PARAMS).get(PLAYOUT_METHOD) is None:
+            self.playout_method = 'PTLG'
+        else:
+            self.playout_method = params.get(GENERATOR_PARAMS).get(PLAYOUT_METHOD)
 
         self.config_space = params.get(GENERATOR_PARAMS).get(CONFIG_SPACE)
         self.n_trials = params.get(GENERATOR_PARAMS).get(N_TRIALS)
@@ -217,7 +217,7 @@ class GenerateEventLogs():
             self.n_trials = self.n_trials
         return
 
-    def generator_wrapper(self, task_tuple, embedded_generator='OTHER'):
+    def generator_wrapper(self, task_tuple, PLAYOUT_METHOD='OTHER'):
         task = self.GeneratorTask(task_tuple, self)
         random.seed(RANDOM_SEED)
         task.configs = task.optimize()
@@ -302,8 +302,8 @@ class GenerateEventLogs():
 
         def gen_log(self, config: Configuration, seed: int = 0):
             random.seed(RANDOM_SEED)
-            model = self.create_ProcessModel(config)
-            log = play_out(model, parameters={"num_traces": config["num_traces"]})
+            model = create_PTLG(config)
+            log = self.playout_Model(model, config)
             random.seed(RANDOM_SEED)
             result = self.eval_log(log)
             return result
@@ -331,8 +331,8 @@ class GenerateEventLogs():
 
         def generate_optimized_log(self, config):
             ''' Returns event log from given configuration'''
-            model = self.create_ProcessModel(config)
-            log = play_out(model, parameters={"num_traces": config["num_traces"]})
+            model = create_PTLG(config)
+            log = self.playout_Model(model, config)
 
             for i, trace in enumerate(log):
                 trace.attributes['concept:name'] = str(i)
@@ -347,51 +347,12 @@ class GenerateEventLogs():
                 "metafeatures": metafeatures,
             }
 
-        def create_ProcessModel(self, config):
+        def playout_Model(self, model, config):
             random.seed(RANDOM_SEED)
-            if self.generator.embedded_generator == 'PTLG':
-                model = self.create_PTLG(config)
-            elif self.generator.embedded_generator == 'DEF':
-                model = self.create_DEF(config)
+            if self.generator.playout_method == 'DEF':
+                log = play_out_DEF(model, config)
+            elif self.generator.playout_method == 'PTLG':
+                log = play_out(model, parameters={"num_traces": config["num_traces"]})
             else:
-                raise NotImplementedError(f"Embedded generator {self.generator.embedded_generator} not implemented.")
-            return model
-
-        def create_DEF(self, config):
-            pass #TODO: Generate DEF model here.
-
-        def create_PTLG(selfi, config):
-            """
-            Parameters
-                --------------
-                parameters
-                    Parameters of the algorithm, according to the paper:
-                    - Parameters.MODE: most frequent number of visible activities
-                    - Parameters.MIN: minimum number of visible activities
-                    - Parameters.MAX: maximum number of visible activities
-                    - Parameters.SEQUENCE: probability to add a sequence operator to tree
-                    - Parameters.CHOICE: probability to add a choice operator to tree
-                    - Parameters.PARALLEL: probability to add a parallel operator to tree
-                    - Parameters.LOOP: probability to add a loop operator to tree
-                    - Parameters.OR: probability to add an or operator to tree
-                    - Parameters.SILENT: probability to add silent activity to a choice or loop operator
-                    - Parameters.DUPLICATE: probability to duplicate an activity label
-                    - Parameters.NO_MODELS: number of trees to generate from model population
-            """
-            random.seed(RANDOM_SEED)
-            tree = generate_process_tree(parameters={
-                "min": config["mode"],
-                "max": config["mode"],
-                "mode": config["mode"],
-                "sequence": config["sequence"],
-                "choice": config["choice"],
-                "parallel": config["parallel"],
-                "loop": config["loop"],
-                "silent": config["silent"],
-                "lt_dependency": config["lt_dependency"],
-                "duplicate": config["duplicate"],
-                "or": config["or"],
-                "no_models": 1
-            })
-            return tree
-
+               raise NotImplementedError(f"Play out method {self.generator.PLAYOUT_METHOD} not implemented.")
+            return log
