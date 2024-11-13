@@ -1,6 +1,6 @@
 # Generator params
 CONFIG_SPACE = 'config_space'
-PLAYOUT_METHOD = 'playout_method'
+SIMULATION_METHOD = 'simulation_method'
 EXPERIMENT = 'experiment'
 GENERATOR_PARAMS = 'generator_params'
 N_TRIALS = 'n_trials'

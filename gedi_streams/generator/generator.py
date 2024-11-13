@@ -21,7 +21,7 @@ from pm4py import write_xes
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
-from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, PLAYOUT_METHOD
+from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, SIMULATION_METHOD
 from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
 from gedi_streams.utils.io_helpers import read_csvs
 from gedi_streams.utils.column_mappings import column_mappings
@@ -133,11 +133,11 @@ class GenerateEventLogs():
         if self.tasks is not None:
             self.feature_keys = sorted([feature for feature in self.tasks.columns.tolist() if feature != "log"])
             num_cores = multiprocessing.cpu_count() if len(self.tasks) >= multiprocessing.cpu_count() else len(self.tasks)
-            #self.generator_wrapper([*self.tasks.iterrows()][0], self.playout_method)# For testing
+            #self.generator_wrapper([*self.tasks.iterrows()][0], self.simulation_method)# For testing
             with multiprocessing.Pool(num_cores) as p:
                 print(f"INFO: Generator starting at {start.strftime('%H:%M:%S')} using {num_cores} cores for {len(self.tasks)} tasks...")
                 random.seed(RANDOM_SEED)
-                log_config = p.map(partial(self.generator_wrapper, PLAYOUT_METHOD=self.playout_method)
+                log_config = p.map(partial(self.generator_wrapper, SIMULATION_METHOD=self.simulation_method)
                                    ,[(index, row) for index, row in self.tasks.iterrows()])
             self.log_config = log_config
 
@@ -169,10 +169,10 @@ class GenerateEventLogs():
         if not os.path.exists(self.output_path):
             os.makedirs(self.output_path, exist_ok=True)
 
-        if params.get(GENERATOR_PARAMS).get(PLAYOUT_METHOD) is None:
-            self.playout_method = 'PTLG'
+        if params.get(GENERATOR_PARAMS).get(SIMULATION_METHOD) is None:
+            self.simulation_method = 'PTLG'
         else:
-            self.playout_method = params.get(GENERATOR_PARAMS).get(PLAYOUT_METHOD)
+            self.simulation_method = params.get(GENERATOR_PARAMS).get(SIMULATION_METHOD)
 
         self.config_space = params.get(GENERATOR_PARAMS).get(CONFIG_SPACE)
         self.n_trials = params.get(GENERATOR_PARAMS).get(N_TRIALS)
@@ -217,7 +217,7 @@ class GenerateEventLogs():
             self.n_trials = self.n_trials
         return
 
-    def generator_wrapper(self, task_tuple, PLAYOUT_METHOD='OTHER'):
+    def generator_wrapper(self, task_tuple, SIMULATION_METHOD='OTHER'):
         task = self.GeneratorTask(task_tuple, self)
         random.seed(RANDOM_SEED)
         task.configs = task.optimize()
@@ -349,10 +349,10 @@ class GenerateEventLogs():
 
         def simulate_Model(self, model, config):
             random.seed(RANDOM_SEED)
-            if self.generator.playout_method == 'DEF':
+            if self.generator.simulation_method == 'DEF':
                 log = play_DEF(model, config)
-            elif self.generator.playout_method == 'PTLG':
+            elif self.generator.simulation_method == 'PTLG':
                 log = play_out(model, parameters={"num_traces": config["num_traces"]})
             else:
-               raise NotImplementedError(f"Play out method {self.generator.PLAYOUT_METHOD} not implemented.")
+               raise NotImplementedError(f"Play out method {self.generator.simulation_method} not implemented.")
             return log

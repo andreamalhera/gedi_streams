@@ -4,7 +4,7 @@
     "output_path": "output/features/2_bpic_features/2_ense_rmcv_feat.csv",
     "output_path": "data/test",
     "generator_params": {
-      "playout_method": "PTLG",
+      "simulation_method": "PTLG",
       "experiment": "data/grid_objectives.csv",
       "experiment": {"input_path": "data/2_bpic_features.csv",
         "objectives": ["ratio_top_20_variants", "epa_normalized_sequence_entropy_linear_forgetting"]},
