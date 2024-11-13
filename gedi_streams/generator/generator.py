@@ -26,7 +26,7 @@ from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_fe
 from gedi_streams.utils.io_helpers import read_csvs
 from gedi_streams.utils.column_mappings import column_mappings
 from gedi_streams.generator.model import create_PTLG
-from gedi_streams.generator.playout import play_out_DEF
+from gedi_streams.generator.simulation import play_DEF
 from xml.dom import minidom
 
 RANDOM_SEED = 10
@@ -303,7 +303,7 @@ class GenerateEventLogs():
         def gen_log(self, config: Configuration, seed: int = 0):
             random.seed(RANDOM_SEED)
             model = create_PTLG(config)
-            log = self.playout_Model(model, config)
+            log = self.simulate_Model(model, config)
             random.seed(RANDOM_SEED)
             result = self.eval_log(log)
             return result
@@ -332,7 +332,7 @@ class GenerateEventLogs():
         def generate_optimized_log(self, config):
             ''' Returns event log from given configuration'''
             model = create_PTLG(config)
-            log = self.playout_Model(model, config)
+            log = self.simulate_Model(model, config)
 
             for i, trace in enumerate(log):
                 trace.attributes['concept:name'] = str(i)
@@ -347,10 +347,10 @@ class GenerateEventLogs():
                 "metafeatures": metafeatures,
             }
 
-        def playout_Model(self, model, config):
+        def simulate_Model(self, model, config):
             random.seed(RANDOM_SEED)
             if self.generator.playout_method == 'DEF':
-                log = play_out_DEF(model, config)
+                log = play_DEF(model, config)
             elif self.generator.playout_method == 'PTLG':
                 log = play_out(model, parameters={"num_traces": config["num_traces"]})
             else:
