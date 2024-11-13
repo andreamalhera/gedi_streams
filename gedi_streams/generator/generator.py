@@ -334,11 +334,6 @@ class GenerateEventLogs():
             model = create_PTLG(config)
             log = self.simulate_Model(model, config)
 
-            for i, trace in enumerate(log):
-                trace.attributes['concept:name'] = str(i)
-                for j, event in enumerate(trace):
-                    event['time:timestamp'] = dt.now()
-                    event['lifecycle:transition'] = "complete"
             random.seed(RANDOM_SEED)
             metafeatures = self.compute_metafeatures(log)
             return {
@@ -353,6 +348,11 @@ class GenerateEventLogs():
                 log = play_DEF(model, config)
             elif self.generator.simulation_method == 'PTLG':
                 log = play_out(model, parameters={"num_traces": config["num_traces"]})
+                for i, trace in enumerate(log):
+                    trace.attributes['concept:name'] = str(i)
+                    for j, event in enumerate(trace):
+                        event['time:timestamp'] = dt.now()
+                        event['lifecycle:transition'] = "complete"
             else:
                raise NotImplementedError(f"Play out method {self.generator.simulation_method} not implemented.")
             return log
