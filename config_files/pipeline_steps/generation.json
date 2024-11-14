@@ -24,5 +24,10 @@
       "plot_reference_feature": "epa_normalized_sequence_entropy_linear_forgetting",
       "plot_reference_feature": ""
     }
-  }
+  },
+ {"pipeline_step": "feature_extraction",
+ "input_path": "output/features/grid_feat/2_enself_rt20v",
+ "feature_params": {"feature_set": ["ratio_top_20_variants", "epa_normalized_sequence_entropy_linear_forgetting"]},
+ "output_path": "output/plots",
+ "plot_type": "boxplot"}
 ]
