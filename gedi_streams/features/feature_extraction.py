@@ -7,10 +7,10 @@ from datetime import datetime as dt
 from functools import partial
 from feeed.feature_extractor import extract_features
 from pathlib import Path
-from gedi.utils.param_keys import INPUT_PATH
-from gedi.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
-from gedi.utils.io_helpers import dump_features_json
-from gedi.utils.column_mappings import column_mappings
+from gedi_streams.utils.param_keys import INPUT_PATH
+from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
+from gedi_streams.utils.io_helpers import dump_features_json
+from gedi_streams.utils.column_mappings import column_mappings
 def get_sortby_parameter(elem):
     number = int(elem.rsplit(".")[0].rsplit("_", 1)[1])
     return number

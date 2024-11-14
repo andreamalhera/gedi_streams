@@ -9,13 +9,13 @@ print(version_string)
 version = version_string
 
 setup(
-        name = 'gedi',
+        name = 'gedi_streams',
         version = str(version),
-        description = 'Generating Event Data with Intentional Features for Benchmarking Process Mining',
+        description = 'Generating Event Streams with Intentional Features',
         author = 'Andrea Maldonado',
         author_email = 'andreamalher.works@gmail.com',
         license = 'MIT',
-        url='https://github.com/lmu-dbs/gedi.git',
+        url='https://github.com/andreamalhera/gedi_streams.git',
         long_description=long_description,
         long_description_content_type="text/markdown",
         install_requires=[
@@ -64,6 +64,7 @@ setup(
             'pydotplus==2.0.2',
             'pynisher==1.0.10',
             'pyrfr==0.9.0',
+            'pytest==8.3.3',
             'pyyaml==6.0.1',
             'rapidfuzz==3.6.1',
             'regex==2023.12.25',
@@ -79,7 +80,7 @@ setup(
             'urllib3==2.2.1',
             'zict==3.0.0'
             ],
-        packages = ['gedi'],
+        packages = ['gedi_streams'],
         classifiers=[
             'Development Status :: 3 - Alpha',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
             'Intended Audience :: Science/Research',      # Define that your audience are developers

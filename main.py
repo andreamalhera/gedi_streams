@@ -1,7 +1,7 @@
 import config
 from datetime import datetime as dt
-from gedi.run import gedi, run
-from gedi.utils.param_keys import *
+from gedi_streams.run import gedi, run
+from gedi_streams.utils.param_keys import *
 from utils.default_argparse import ArgParser
 
 if __name__=='__main__':
