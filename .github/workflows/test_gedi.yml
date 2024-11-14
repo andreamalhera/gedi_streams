@@ -62,7 +62,7 @@ jobs:
 
     - name: Compare csv results
       run:
-        diff data/validation/2_enself_rt20v.json output/features/grid_feat/2_enself_rt20v_feat.csv
+        diff data/validation/2_enself_rt20v.csv output/features/grid_feat/2_enself_rt20v_feat.csv
 
     - name: Compare output jsons
       run: 
