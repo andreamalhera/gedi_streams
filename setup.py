@@ -64,6 +64,7 @@ setup(
             'pydotplus==2.0.2',
             'pynisher==1.0.10',
             'pyrfr==0.9.0',
+            'pytest==8.3.3',
             'pyyaml==6.0.1',
             'rapidfuzz==3.6.1',
             'regex==2023.12.25',
