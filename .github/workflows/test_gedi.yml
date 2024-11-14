@@ -60,6 +60,9 @@ jobs:
       run:
         python main.py -a config_files/pipeline_steps/generation.json
 
+    - name: Compare results
+      run:
+        diff data/validation/2enself_rt20v.json output/features/grid_feat/2_enself_rt20v_feat.csv
     - name: Compare output 1
       run: 
         diff data/validation/genELexperiment1_04_02.json output/features/grid_feat/2_enself_rt20v/genELexperiment1_04_02.json
