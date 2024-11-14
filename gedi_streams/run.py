@@ -2,7 +2,7 @@ import config
 import pandas as pd
 from datetime import datetime as dt
 from gedi_streams.generator.generator import GenerateEventLogs
-from gedi_streams.features import EventLogFeatures
+from gedi_streams.features.feature_extraction import EventLogFeatures
 from gedi_streams.plotter import FeaturesPlotter, GenerationPlotter
 from gedi_streams.utils.param_keys import *
 from utils.default_argparse import ArgParser

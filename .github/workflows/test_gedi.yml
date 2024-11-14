@@ -9,27 +9,6 @@ on:
 
 # Specifies the jobs that are to be run
 jobs:
-  test_pytest:
-    runs-on: ubuntu-latest
-    # Setting up a python envronment  for the test script to run
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python
-      uses: actions/setup-python@v5
-      with:
-        python-version: 3.9
-
-    - name: Install local package
-      run: |
-        python -m pip install --upgrade pip
-        pip install .
-
-    - name: Run test
-      run:
-        python -m pytest
-
   test_feature-extraction:
     runs-on: ubuntu-latest
 
@@ -50,14 +29,10 @@ jobs:
 
     - name: Run test
       run:
-        python main.py -a config_files/pipeline_steps/feature_extraction.json
-
-    - name: Compare output
-      run: diff data/validation/test_feat.csv data/test_feat.csv
+        pytest test/test_feature_extraction.py --maxfail=1 --disable-warnings -q
 
   test_generation:
     runs-on: ubuntu-latest
-
     # Setting up a python envronment  for the test script to run
     steps:
     - name: Checkout code
@@ -68,26 +43,14 @@ jobs:
       with:
         python-version: 3.9
 
-    - name: Install dependencies
-      run: |
-        sudo apt-get install build-essential python3 python3-dev
-
-    - name: Install as local package
+    - name: Install local package
       run: |
         python -m pip install --upgrade pip
         pip install .
 
     - name: Run test
       run:
-        python main.py -a config_files/pipeline_steps/generation.json
-
-    - name: Compare csv results
-      run:
-        diff data/validation/2_enself_rt20v_feat.csv output/features/grid_feat/2_enself_rt20v_feat.csv
-
-    - name: Compare output jsons
-      run: 
-        diff data/validation/genELexperiment1_04_02.json output/features/grid_feat/2_enself_rt20v/genELexperiment1_04_02.json
+        pytest test/test_generator.py --maxfail=1 --disable-warnings -q
 
   test_evaluation-plotter:
     runs-on: ubuntu-latest
