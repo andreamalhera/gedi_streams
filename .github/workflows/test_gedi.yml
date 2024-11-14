@@ -9,7 +9,7 @@ on:
 
 # Specifies the jobs that are to be run
 jobs:
-  test_feature-extraction:
+  test_feature_extraction:
     runs-on: ubuntu-latest
 
     # Setting up a python envronment  for the test script to run
@@ -29,7 +29,7 @@ jobs:
 
     - name: Run test
       run:
-        pytest test/test_feature_extraction.py --maxfail=1 --disable-warnings -q
+        pytest -v tests/test_feature_extraction.py --maxfail=1 --disable-warnings -q
 
   test_generation:
     runs-on: ubuntu-latest
@@ -50,7 +50,7 @@ jobs:
 
     - name: Run test
       run:
-        pytest test/test_generator.py --maxfail=1 --disable-warnings -q
+        pytest -v tests/test_generator.py --maxfail=1 --disable-warnings -q
 
   test_evaluation-plotter:
     runs-on: ubuntu-latest
@@ -78,7 +78,7 @@ jobs:
       run:
         python main.py -a config_files/pipeline_steps/evaluation_plotter.json
 
-  test_integration:
+  test_main_integration:
     runs-on: ubuntu-latest
 
     # Setting up a python envronment  for the test script to run
