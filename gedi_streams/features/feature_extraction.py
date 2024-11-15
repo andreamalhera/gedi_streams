@@ -186,7 +186,7 @@ class FeatureExtraction(EventDataFile):
 def DEF_wrapper():
     event_factory = EventFactory()
     (event_factory
-    .add_directory("./DistributedEventFactory/config/datasource/assemblyline")
-    .add_file("./DistributedEventFactory/config/simulation/stream.yaml")
-     .add_file("./DistributedEventFactory/config/sink/sink.yaml")
+    .add_directory("DistributedEventFactory/config/datasource/assemblyline/")
+    .add_file("DistributedEventFactory/config/simulation/stream.yaml")
+    .add_file("DistributedEventFactory/config/sink/console-sink.yaml")
     ).run()
