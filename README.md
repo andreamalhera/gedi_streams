@@ -1,35 +1,18 @@
----
-title: iGedi
-emoji: 🌖
-colorFrom: indigo
-colorTo: pink
-sdk: streamlit
-sdk_version: 1.38.0
-app_file: utils/config_fabric.py
-pinned: false
-license: mit
----
-
 <p>
-  <img src="gedi/utils/logo.png" alt="Logo" width="100" align="left" />
-  <h1 style="display: inline;">(i)GEDI</h1>
+  <img src="gedi_streams/utils/logo.png" alt="Logo" width="100" align="left" />
+  <h1 style="display: inline;">GEDI Streams</h1>
 </p>
 
-(**i**nteractive) **G**enerating **E**vent **D**ata with **I**ntentional Features for Benchmarking Process Mining<br />
-This repository contains the codebase for the interactive web application tool (iGEDI) as well as for the [GEDI paper](https://mcml.ai/publications/gedi.pdf) accepted at the BPM'24 conference.
+**G**enerating **E**vent **D**ata with **I**ntentional Features for Process Mining **Streams** <br />
+This repository contains the codebase based on the [GEDI paper](https://mcml.ai/publications/gedi.pdf) accepted at the <> conference.
 
 ## Table of Contents
 
-- [Interactive Web Application (iGEDI)](#interactive-web-application)
 - [Requirements](#requirements)
 - [Installation](#installation)
 - [General Usage](#general-usage)
 - [Experiments](#experiments)
 - [Citation](#citation)
-
-## Interactive Web Application
-Our [interactive web application](https://huggingface.co/spaces/andreamalhera/gedi) (iGEDI) guides you through the specification process, runs GEDI for you. You can directly download the resulting generated logs or the configuration file to run GEDI locally.
-![Interface Screenshot](gedi/utils/iGEDI_interface.png)
 
 ## Requirements
 - [Miniconda](https://docs.conda.io/en/latest/miniconda.html)
@@ -44,11 +27,21 @@ brew install swig
 conda install pyrfr swig
 ```
 ## Installation
+To directly use GEDI Streams methods via `import gedi_streams`, install directly from [PyPi](https://pypi.org/project/gedi/).
+```console
+pip install gedi_streams
+```
+Alternatively, you can create an environment with
 - `conda env create -f .conda.yml`
 
-### Startup
+Run:
 ```console
-conda activate gedi
+python -c "from gedi_streams import gedi_streams; gedi_streams('config_files/pipeline_steps/generation.json')"
+```
+or
+
+```console
+conda activate gedi_streams
 python main.py -a config_files/test/experiment_test.json
 ```
 The last step should take only a few minutes to run.
@@ -57,12 +50,11 @@ The last step should take only a few minutes to run.
 Our pipeline offers several pipeline steps, which can be run sequentially or partially ordered:
 - [Feature Extraction](#feature-extraction)
 - [Generation](#generation)
-- [Benchmark](#benchmark)
-- [Evaluation Plotter](https://github.com/lmu-dbs/gedi/blob/16-documentation-update-readme/README.md#evaluation-plotting)
+- [Evaluation Plotter](https://github.com/lmu-dbs/gedi_streams/blob/16-documentation-update-readme/README.md#evaluation-plotting)
 
-To run different steps of the GEDI pipeline, please adapt the `.json` accordingly.
+To run different steps of the GEDI Streams  pipeline, please adapt the `.json` accordingly.
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/pipeline_steps/<pipeline-step>.json
 ```
 For reference of possible keys and values for each step, please see `config_files/test/experiment_test.json`.
@@ -73,7 +65,7 @@ To reproduce results from our paper, please refer to [Experiments](#experiments)
 ---
 To extract the features on the event-log level and use them for hyperparameter optimization, we employ the following script:
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/pipeline_steps/feature_extraction.json
 ```
 The JSON file consists of the following key-value pairs:
@@ -94,7 +86,7 @@ After having extracted meta features from the files, the next step is to generat
 The command to execute the generation step is given by a exemplarily generation.json file:
 
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/pipeline_steps/generation.json
 ```
 
@@ -338,29 +330,11 @@ In case of manually defining the targets for the features in config space, the f
     </table>
 </div>
 
-### Benchmark
-The benchmarking defines the downstream task which is used for evaluating the goodness of the synthesized event log datasets with the metrics of real-world datasets. The command to execute a benchmarking is shown in the following script:
-
-```console
-conda activate gedi
-python main.py -a config_files/pipeline_steps/benchmark.json
-```
-
-In the `benchmark.json`, we have the following key-value pairs:
-
-* pipeline_step: denotes the current step in the pipeline (here: benchmark_test)
-* benchmark_test: defines the downstream task. Currently (in v 1.0), only `discovery` for process discovery is implemented
-* input_path: defines the input folder where the synthesized event log data are stored
-* output_path: defines the output folder
-* miners: defines the miners for the downstream task 'discovery' which are used in the benchmarking. In v 1.0 the miners 'inductive' for inductive miner, 'heuristics' for heuristics miner, 'imf' for inductive miner infrequent, as well as 'ilp' for integer linear programming are implemented
-
-
 ### Evaluation Plotting
 The purpose of the evaluation plotting step is used just for visualization. Some examples of how the plotter can be used is shown in the following exemplarily script:
 
-
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/pipeline_steps/evaluation_plotter.json
 ```
 
@@ -380,26 +354,14 @@ We present two settings for generating intentional event logs, using [real targe
 To execute the experiments with real targets, we employ the [experiment_real_targets.json](config_files/experiment_real_targets.json). The script's pipeline will output the [generated event logs (GenBaselineED)](data/event_logs/GenBaselineED), which optimize their feature values towards [real-world event data features](data/BaselineED_feat.csv), alongside their respectively measured [feature values](data/GenBaselineED_feat.csv) and [benchmark metrics values](data/GenBaselineED_bench.csv).
 
 ```console
-conda activate gedi
+conda activate gedi_streams
 python main.py -a config_files/experiment_real_targets.json
 ```
 
 ### Generating data with grid targets
-To execute the experiments with grid targets, a single [configuration](config_files/grid_2obj) can be selected or all [grid objectives](data/grid_2obj) can be run with one command using the following script. This script will output the [generated event logs (GenED)](data/event_logs/GenED), alongside their respectively measured [feature values](data/GenED_feat.csv) and [benchmark metrics values](data/GenED_bench.csv).
-```
-conda activate gedi
-python gedi/utils/execute_grid_experiments.py config_files/test
-```
 We employ the [experiment_grid_2obj_configfiles_fabric.ipynb](notebooks/experiment_grid_2obj_configfiles_fabric.ipynb) to create all necessary [configuration](config_files/grid_2obj) and [objective](data/grid_2obj) files for this experiment.
-For more details about these config_files, please refer to [Feature Extraction](#feature-extraction), [Generation](#generation), and [Benchmark](#benchmark).
-To create configuration files for grid objectives interactively, you can use the start the following dashboard:
-```
-streamlit run utils/config_fabric.py # To tunnel to local machine add: --server.port 8501 --server.headless true
-
-# In local machine (only in case you are tunneling):
-ssh -N -f -L 9000:localhost:8501 <user@remote_machine.com>
-open "http://localhost:9000/"
-```
+To create configuration files for grid objectives interactively, you can use the start the [iGEDI Webapp](https://huggingface.co/spaces/andreamalhera/gedi) or the following dashboard from [iGEDI](https://github.com/lmu-dbs/gedi/blob/1d56290b643e3507cb0a2a70963c0e77188e045d/README.md?plain=1#L397)
+For running config_files, please refer to [Feature Extraction](#feature-extraction), and [Generation](#generation).
 
 ### Visualizations
 To run the visualizations, we employ [jupyter notebooks](https://jupyter.org/install) and [add the installed environment to the jupyter notebook](https://medium.com/@nrk25693/how-to-add-your-conda-environment-to-your-jupyter-notebook-in-just-4-steps-abeab8b8d084). We then start all visualizations by running e.g.: `jupyter noteboook`. In the following, we describe the `.ipynb`-files in the folder `\notebooks` to reproduce the figures from our paper. 
@@ -407,54 +369,7 @@ To run the visualizations, we employ [jupyter notebooks](https://jupyter.org/ins
 #### [Fig. 4 and fig. 5 Representativeness](notebooks/gedi_figs4and5_representativeness.ipynb)
 To visualize the coverage of the feasible feature space of generated event logs compared to existing real-world benchmark datasets, in this notebook, we conduct a principal component analysis on the features of both settings. The first two principal components are utilized to visualize the coverage which is further highlighted by computing a convex hull of the 2D mapping.Additionally, we visualize the distribution of each meta feature we used in the paper as a boxplot. Additional features can be extracted with FEEED. Therefore, the notebook contains the figures 4 and 5 in the paper.
 
-#### [Fig. 6 Benchmark Boxplots](notebooks/gedi_fig6_benchmark_boxplots.ipynb)
-This notebook is used to visualize the metric distribution of real event logs compared to the generated ones. It shows 5 different metrics on 3 various process discovery techniques. We use 'fitness,', 'precision', 'fscore', 'size', 'cfc' (control-flow complexity) as metrics and as 'heuristic miner', 'ilp' (integer linear programming), and 'imf' (inductive miner infrequent) as miners. The notebook outputs the visualization shown in Fig.6 in the paper.
-
-#### [Fig. 7 and fig. 8 Benchmark's Statistical Tests](notebooks/gedi_figs7and8_benchmarking_statisticalTests.ipynb)
-
-This notebook is used to answer the question if there is a statistically significant relation between feature similarity and performance metrics for the downstream tasks of process discovery. For that, we compute the pearson coefficient, as well as the kendall's tau coefficient. This elucidates the correlation between the features with metric scores being used for process discovery. Each coefficient is calculated for three different settings: i) real-world datasets; ii) synthesized event log data with real-world targets; iii) synthesized event log data with grid objectives. Figures 7 and 8 shown in the paper refer to this notebook.
-
 #### [Fig. 9 Consistency and fig. 10 Limitations](notebooks/gedi_figs9and10_consistency.ipynb)
 Likewise to the evaluation on the statistical tests in notebook `gedi_figs7and8_benchmarking_statisticalTests.ipynb`, this notebook is used to compute the differences between two correlation matrices $\Delta C = C_1 - C_2$. This logic is employed to evaluate and visualize the distance of two correlation matrices. Furthermore, we show how significant scores are retained from the correlations being evaluated on real-world datasets coompared to synthesized event log datasets with real-world targets. In Fig. 9 and 10 in the paper, the results of the notebook are shown. 
 
 ## Citation
-The `GEDI` framework is taken directly from the original paper by [Maldonado](mailto:andreamalher.works@gmail.com), Frey, Tavares, Rehwald and Seidl on BPM'24.
-
-```bibtex
-@InProceedings{maldonado2024gedi,
-author="Maldonado, Andrea
-and Frey, Christian M. M.
-and Tavares, Gabriel Marques
-and Rehwald, Nikolina
-and Seidl, Thomas",
-editor="Marrella, Andrea
-and Resinas, Manuel
-and Jans, Mieke
-and Rosemann, Michael",
-title="GEDI: Generating Event Data with Intentional Features for Benchmarking Process Mining",
-booktitle="Business Process Management",
-year="2024",
-publisher="Springer Nature Switzerland",
-address="Cham",
-pages="221--237",
-abstract="Process mining solutions include enhancing performance, conserving resources, and alleviating bottlenecks in organizational contexts. However, as in other data mining fields, success hinges on data quality and availability. Existing analyses for process mining solutions lack diverse and ample data for rigorous testing, hindering insights' generalization. To address this, we propose Generating Event Data with Intentional features, a framework producing event data sets satisfying specific meta-features. Considering the meta-feature space that defines feasible event logs, we observe that existing real-world datasets describe only local areas within the overall space. Hence, our framework aims at providing the capability to generate an event data benchmark, which covers unexplored regions. Therefore, our approach leverages a discretization of the meta-feature space to steer generated data towards regions, where a combination of meta-features is not met yet by existing benchmark datasets. Providing a comprehensive data pool enriches process mining analyses, enables methods to capture a wider range of real-world scenarios, and improves evaluation quality. Moreover, it empowers analysts to uncover correlations between meta-features and evaluation metrics, enhancing explainability and solution effectiveness. Experiments demonstrate GEDI's ability to produce a benchmark of intentional event data sets and robust analyses for process mining tasks.",
-isbn="978-3-031-70396-6"
-}
-```
-
-Furthermore, the `iGEDI` web application is taken directly from the original paper by [Maldonado](mailto:andreamalher.works@gmail.com), Aryasomayajula, Frey, and Seidl and is *to appear on Demos@ICPM'24*.
-```
-@inproceedings{maldonado2024igedi,
-  author       = {Andrea Maldonado and
-                  Sai Anirudh Aryasomayajula and
-                  Christian M. M. Frey and
-                  Thomas Seidl},
-  editor       = {Jochen De Weerdt, Giovanni Meroni, Han van der Aa, and Karolin Winter},
-  title        = {iGEDI: interactive Generating Event Data with Intentional Features},
-  booktitle    = {ICPM 2024 Tool Demonstration Track, October 14-18, 2024, Kongens Lyngby, Denmark},
-  series       = {{CEUR} Workshop Proceedings},
-  publisher    = {CEUR-WS.org},
-  year         = {2024},
-  bibsource    = {dblp computer science bibliography, https://dblp.org}
-}
-```

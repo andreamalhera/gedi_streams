@@ -15,7 +15,7 @@ setup(
         author = 'Andrea Maldonado',
         author_email = 'andreamalher.works@gmail.com',
         license = 'MIT',
-        url='https://github.com/lmu-dbs/gedi_streams.git',
+        url='https://github.com/andreamalhera/gedi_streams.git',
         long_description=long_description,
         long_description_content_type="text/markdown",
         install_requires=[

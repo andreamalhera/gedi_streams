@@ -1,8 +1,8 @@
 import config
 from datetime import datetime as dt
-from gedi.run import gedi, run
+from gedi_streams.run import gedi, run
+from gedi_streams.utils.param_keys import *
 from utils.default_argparse import ArgParser
-from utils.param_keys import *
 
 if __name__=='__main__':
     start_gedi = dt.now()

@@ -1,0 +1,5 @@
+ratio_top_20_variants,epa_normalized_sequence_entropy_linear_forgetting,log,target_similarity
+0.20017714791851102,0.052097205658647006,genELexperiment1_04_02,0.7418932364693801
+0.387647831800262,0.052097205658647006,genELexperiment2_07_04,0.6067885575145451
+,0.052097205658647006,genELexperiment3_04_nan,0.7418932612931081
+0.2,,genELexperiment4_nan_02,1.0

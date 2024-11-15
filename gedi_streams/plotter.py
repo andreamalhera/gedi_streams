@@ -11,17 +11,17 @@ import glob
 from matplotlib.axes import Axes
 from matplotlib.figure import Figure
 from matplotlib.lines import Line2D
-from utils.param_keys import PLOT_TYPE, PROJECTION, EXPLAINED_VAR, PLOT_3D_MAP
-from utils.param_keys import OUTPUT_PATH, PIPELINE_STEP
-from utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, PLOT_REFERENCE_FEATURE
-from utils.param_keys.plotter import REAL_EVENTLOG_PATH, FONT_SIZE, BOXPLOT_WIDTH
+from gedi_streams.utils.param_keys import PLOT_TYPE, PROJECTION, EXPLAINED_VAR, PLOT_3D_MAP
+from gedi_streams.utils.param_keys import OUTPUT_PATH, PIPELINE_STEP
+from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, PLOT_REFERENCE_FEATURE
+from gedi_streams.utils.param_keys.plotter import REAL_EVENTLOG_PATH, FONT_SIZE, BOXPLOT_WIDTH
 from collections import defaultdict
 
 from sklearn.preprocessing import Normalizer, StandardScaler
 from sklearn.decomposition import PCA
-from gedi.generator import get_tasks
-from gedi.utils.io_helpers import get_keys_abbreviation
-from gedi.utils.io_helpers import read_csvs, select_instance
+from gedi_streams.generator.generator import get_tasks
+from gedi_streams.utils.io_helpers import get_keys_abbreviation
+from gedi_streams.utils.io_helpers import read_csvs, select_instance
 
 def insert_newlines(string, every=140):
     return '\n'.join(string[i:i+every] for i in range(0, len(string), every))
@@ -251,69 +251,6 @@ class ArrayPlotter(MyPlotter):
         self._activate_legend = True
         self._post_processing()
 
-class BenchmarkPlotter:
-    def __init__(self, benchmark_results, output_path = None):
-        self.plot_miners_correlation(benchmark_results, output_path=output_path)
-        self.plot_miner_feat_correlation(benchmark_results, output_path=output_path)
-        self.plot_miner_feat_correlation(benchmark_results, mean='methods', output_path=output_path)
-
-    def plot_miner_feat_correlation(self, benchmark, mean='metrics', output_path=None):
-        df = benchmark.loc[:, benchmark.columns!='log']
-        corr = df.corr()
-
-        if mean == 'methods':
-            for method in ['inductive', 'heu', 'ilp']:
-                method_cols = [col for col in corr.columns if col.startswith(method)]
-                corr[method+'_avg'] = corr.loc[:, corr.columns.isin(method_cols)].mean(axis=1)
-        elif mean == 'metrics':
-            for metric in ['fitness', 'precision', 'generalization', 'simplicity']:
-                metric_cols = [col for col in corr.columns if col.endswith(metric)]
-                corr[metric+'_avg'] = corr.loc[:, corr.columns.isin(metric_cols)].mean(axis=1)
-
-        avg_cols = [col for col in corr.columns if col.endswith('_avg')]
-
-        benchmark_result_cols = [col for col in corr.columns if col.startswith('inductive')
-                                or col.startswith('heu') or col.startswith('ilp')]
-
-        corr = corr[:][~corr.index.isin(benchmark_result_cols)]
-
-        fig, axes = plt.subplots( 1, len(avg_cols), figsize=(15,10))
-
-        for i, ax in enumerate(axes):
-            cbar = True if i==3 else False
-            corr = corr.sort_values(avg_cols[i], axis=0, ascending=False)
-            b= sns.heatmap(corr[[avg_cols[i]]][:],
-                        ax=ax,
-                        xticklabels=[avg_cols[i]],
-                        yticklabels=corr.index,
-                        cbar=cbar)
-        plt.subplots_adjust(wspace = 1, top=0.9, left=0.15)
-        fig.suptitle(f"Feature and performance correlation per {mean.split('s')[0]} for {len(benchmark)} event-logs")
-        if output_path != None:
-            output_path = output_path+f"/minperf_corr_{mean.split('s')[0]}_el{len(benchmark)}.jpg"
-            fig.savefig(output_path)
-            print(f"SUCCESS: Saved correlation plot at {output_path}")
-        #plt.show()
-
-    def plot_miners_correlation(self, benchmark, output_path=None):
-        benchmark_result_cols = [col for col in benchmark.columns if col.startswith('inductive')
-                                or col.startswith('heu') or col.startswith('ilp')]
-        df = benchmark.loc[:, benchmark.columns!='log']
-        df = df.loc[:, df.columns.isin(benchmark_result_cols)]
-
-        corr = df.corr()
-        fig, ax = plt.subplots(figsize=(15,10))
-        b= sns.heatmap(corr,
-                    ax=ax,
-                    xticklabels=corr.columns.values,
-                    yticklabels=corr.columns.values)
-        plt.title(f"Miners and performance correlation for {len(benchmark)} event-logs", loc='center')
-        if output_path != None:
-            output_path = output_path+f"/minperf_corr_el{len(benchmark)}.jpg"
-            fig.savefig(output_path)
-            print(f"SUCCESS: Saved correlation plot at {output_path}")
-        #plt.show()
-
 class FeaturesPlotter:
     def __init__(self, features, params=None):
         output_path = params[OUTPUT_PATH] if OUTPUT_PATH in params else None
@@ -414,220 +351,6 @@ class FeaturesPlotter:
 
         output_path = output_path+f"/{plot_type}s_{source}{len(columns)}fts_{len(features)}gEL_of{len(bdf[bdf['Log Nature'].isin(nature_types)])}.jpg"
         return fig, output_path
-
-class AugmentationPlotter(object):
-    """Plotter for the augmented features.
-    If just 2 features are examined, the plotter outputs a scatterplot with the two features defining
-    the dimensions.
-    IF more than 2 features are examined, a PCA is performed first before the first two principal
-    components are plotted.
-
-    Parameters
-    ----------
-    features : pd.DataFrame
-        dataFrame containing the information of the real and synthesized datasets.
-    """
-
-    def __init__(self, features, params=None) -> None:
-        output_path = params[OUTPUT_PATH] if OUTPUT_PATH in params else None
-        self.sampler = params['augmentation_params']['method']
-        eval(f"self.plot_augmented_features(features, output_path)")
-
-
-    def plot_augmented_features(self, features, output_path=None) -> None:
-        """Plotting for augmented features. When more than 2 features are selected, the
-        plot will show the result after applying a PCA; otherwise the 2 features are
-        plotted according to the values.
-
-        Parameters
-        ----------
-        features : pd.DataFrame
-            DataFrame containing the augmented features
-        output_path : str, optional
-            Path to the output file, by default None
-        """
-        if len(features.all.columns) < 2:
-            raise AssertionError ("AugmentationPlotter - More than 2 (augmented) features are expected for plotting.")
-
-        if len(features.all.columns) > 2:
-            self._plot_pca(features, output_path)
-        else:
-            self._plot_2d(features, output_path)
-
-
-    def _plot_2d(self, features, output_path=None) -> None:
-        """Fnc for plotting 2D features without any dimension reduction technique being applied.
-
-        Parameters
-        ----------
-        features : pd.DataFrame
-            Dataframe containing the augmented features
-        output_path : str, optional
-            Path to the output file, by default None
-        """
-        col1_name, col2_name = features.all.columns
-
-        # INIT - settings
-        X = features.all.iloc[:-features.new_samples.shape[0]]
-        X = X.to_numpy()
-        X_aug = features.all.to_numpy()
-        sns.set_theme()
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(24, 8))
-        fig.suptitle(f'Log Descriptors - real: {X.shape[0]}, synth.: {X_aug.shape[0]-X.shape[0]}', fontsize=16)
-
-        # Normalizer: applied to each observation -> row values have unit norm
-        normalizer = Normalizer(norm="l2").fit(X)
-        normed_data = normalizer.transform(X_aug)
-
-        # StandardScaler: applied to features -> col values have unit norm
-        scaler = StandardScaler().fit(X)
-        scaled_data = scaler.transform(X_aug)
-
-        # PLOT - raw 2d data
-        X_aug = self._add_real_synth_encoding(X_aug, X, X_aug)
-        df_raw = self._convert_to_df(X_aug, [col1_name, col2_name, 'type'])
-        sns.scatterplot(ax=ax1, data=df_raw, x=col1_name, y=col2_name, palette="bright", 
-                        hue = "type", alpha=0.5, s=100).set_title("Raw data") 
-        ax1.get_legend().set_title("")
-
-        # PLOT - normed 2d data
-        normed_data = self._add_real_synth_encoding(normed_data, X, X_aug)
-        df_normed = self._convert_to_df(normed_data, [col1_name, col2_name, 'type'])
-        sns.scatterplot(ax=ax2, data=df_normed, x=col1_name, y=col2_name, palette="bright", 
-                        hue = 'type', alpha=0.5, s=100).set_title("Normalized data")
-        ax2.get_legend().set_title("")
-
-        # PLOT - scaled 2d data
-        scaled_data = self._add_real_synth_encoding(scaled_data, X, X_aug)
-        df_scaled = self._convert_to_df(scaled_data, [col1_name, col2_name, 'type'])
-        sns.scatterplot(ax=ax3, data=df_scaled, x=col1_name, y=col2_name, palette="bright", 
-                        hue = 'type', alpha=0.5, s=100).set_title("Scaled data")
-        ax3.get_legend().set_title("")
-
-        plt.tight_layout()
-
-        # OUTPUT
-        if output_path != None:
-            output_path += f"/augmentation_2d_plot_{col1_name}-{col2_name}_{self.sampler}.jpg"
-            fig.savefig(output_path)
-            print(f"SUCCESS: Saved augmentation pca plot at {output_path}")
-
-    def _add_real_synth_encoding(self, arr, X, X_aug) -> np.array:
-        """Helper function for adding one additional column to the array in the last column. 
-        The last column indicates whether it is a real data (=0) or synthesized (=1).
-
-        Parameters
-        ----------
-        arr : np.array
-            data array
-        X : np.array
-            data of real datasets
-        X_aug : np.array
-            data of real datasets and synthesized datasets
-
-        Returns
-        -------
-        np.array
-            array containing the data with an additional last column indicating whether the
-            data comes from a real dataset or synthesized one
-        """
-        real_synth_enc = np.array([0]*X.shape[0] + [1]*(X_aug.shape[0]-X.shape[0])).reshape(-1, 1)
-        return np.hstack ([arr, real_synth_enc])
-
-    def _convert_to_df(self, arr, colnames, enc=['real', 'synth']) -> pd.DataFrame:
-        """Converts the attached array to a dataframe. The column names are
-        defined by the respective parameters, where the last column is encoded
-        by the string array of the enc parameter.
-
-        Parameters
-        ----------
-        arr : np.array
-            _description_
-        colnames : list
-            column names of returned dataframe
-        enc : list, optional
-            labels for real vs. generated data, by default ['real', 'synth']
-
-        Returns
-        -------
-        pd.DataFrame
-            dataframe containing the attached data array with encoded values in the last column 
-        """
-        df = pd.DataFrame(arr, columns=colnames)
-        df.loc[df.iloc[:, -1] == 0, colnames[-1]] = enc[0]
-        df.loc[df.iloc[:, -1] == 1, colnames[-1]] = enc[1]
-        return df
-
-    def _plot_pca(self, features, output_path=None) -> None:
-        """Fnc for plotting features with PCA as dimension reduction technique being applied.
-
-        Parameters
-        ----------
-        features : pd.DataFrame
-            DataFrame containing the augmented features
-        output_path : str, optional
-            path to output file, by default None
-        """
-        # INIT - settings
-        n_features = features.all.shape[1]
-        X = features.all.iloc[:-features.new_samples.shape[0]]
-        X = X.to_numpy()
-        X_aug = features.all.to_numpy()
-        sns.set_theme()
-        fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(24, 8))
-        fig.suptitle(f'Log Descriptors - real: {X.shape[0]}, synth.: {X_aug.shape[0]-X.shape[0]}', fontsize=16)
-
-        pca_components = 2
-        pca = PCA(n_components=pca_components)
-
-        # Normalizer: applied to each observation -> row values have unit norm
-        normalizer = Normalizer(norm="l2").fit(X)
-        normed_data_real = normalizer.transform(X)
-        normed_data_aug = normalizer.transform(X_aug)
-
-        # StandardScaler: applied to features -> col values have unit norm
-        scaler = StandardScaler().fit(X)
-        scaled_data_real = scaler.transform(X)
-        scaled_data_aug = scaler.transform(X_aug)
-
-        # PLOT - PCA on raw input
-        fit_pca = pca.fit(X)
-        X_new = fit_pca.transform(X_aug)
-        X_new = self._add_real_synth_encoding(X_new[:, :pca_components], X, X_aug)
-        df_pca = self._convert_to_df(X_new, ['PC_1', 'PC_2', 'type'])
-        sns.scatterplot(ax=ax1, data=df_pca, x="PC_1", y="PC_2", palette="bright", hue = 'type', alpha=0.5, s=100)
-        ax1.set_xlabel(f"PC1 ({np.round(pca.explained_variance_ratio_[0]*100, 2)}% explained variance)")
-        ax1.set_ylabel(f"PC2 ({np.round(pca.explained_variance_ratio_[1]*100, 2)}% explained variance)")
-        ax1.get_legend().set_title("")
-
-        # PLOT - PCA on normed data
-        fit_norm_pca = pca.fit(normed_data_real)
-        X_new_normed = fit_norm_pca.transform(normed_data_aug)
-        X_new_normed = self._add_real_synth_encoding(X_new_normed[:, :pca_components], X, X_aug)
-        df_pca_normed = self._convert_to_df(X_new_normed, ['PC_1', 'PC_2', 'type'])
-        sns.scatterplot(ax=ax2, data=df_pca_normed, x="PC_1", y="PC_2", palette="bright", hue = 'type', alpha=0.5, s=100)
-        ax2.set_xlabel(f"PC1 ({np.round(pca.explained_variance_ratio_[0]*100, 2)}% explained variance)")
-        ax2.set_ylabel(f"PC2 ({np.round(pca.explained_variance_ratio_[1]*100, 2)}% explained variance)")
-        ax2.get_legend().set_title("")
-
-        # PLOT - PCA on scaled data
-        fit_sca_pca = pca.fit(scaled_data_real)
-        X_new_sca = fit_sca_pca.transform(scaled_data_aug)
-        X_new_sca = self._add_real_synth_encoding(X_new_sca[:, :pca_components], X, X_aug)
-        df_pca_scaled = self._convert_to_df(X_new_sca,  ['PC_1', 'PC_2', 'type'])
-        sns.scatterplot(ax=ax3, data=df_pca_scaled, x="PC_1", y="PC_2", palette="bright", hue = 'type', alpha=0.5, s=100)
-        ax3.set_xlabel(f"PC1 ({np.round(pca.explained_variance_ratio_[0]*100, 2)}% explained variance)")
-        ax3.set_ylabel(f"PC2 ({np.round(pca.explained_variance_ratio_[1]*100, 2)}% explained variance)")
-        ax3.get_legend().set_title("")
-
-        plt.tight_layout()
-
-        # OUTPUT
-        if output_path != None:
-            output_path += f"/augmentation_pca_{n_features}_{self.sampler}.jpg"
-            fig.savefig(output_path)
-            print(f"SUCCESS: Saved augmentation pca plot at {output_path}")
-
 
 class GenerationPlotter(object):
     def __init__(self, gen_cfg, model_params, output_path, input_path=None):

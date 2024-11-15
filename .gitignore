@@ -1,0 +1,8 @@
+*.pyc
+.ipynb_checkpoints/
+build/
+data/
+gedi.egg-info/
+notebooks/.ipynb_checkpoints/*
+output/
+smac3_output/
