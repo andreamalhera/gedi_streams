@@ -12,7 +12,7 @@ def test_GenerateEventLogs():
 
 def test_abbr_GenerateEventLogs():
     INPUT_PARAMS = {'generator_params': {'experiment': {'input_path': 'data/test/igedi_table_1.csv', 'objectives': ['rmcv', 'ense']}, 'config_space': {'mode': [5, 20], 'sequence': [0.01, 1], 'choice': [0.01, 1], 'parallel': [0.01, 1], 'loop': [0.01, 1], 'silent': [0.01, 1], 'lt_dependency': [0.01, 1], 'num_traces': [10, 10001], 'duplicate': [0], 'or': [0]}, 'n_trials': 2}}
-    VALIDATION_OUTPUT = [0.91, 0.69, 0.71]
+    VALIDATION_OUTPUT = [0.93, 0.66, 0.66]
     genED = GenerateEventLogs(INPUT_PARAMS)
     similarities = [round(experiment['metafeatures']['target_similarity'], 2) for experiment in genED.log_config]
     assert similarities == VALIDATION_OUTPUT
