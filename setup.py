@@ -11,7 +11,7 @@ version = version_string
 setup(
         name = 'gedi_streams',
         version = str(version),
-        description = 'Generating Event Data with Intentional Features for Process Streams",
+        description = 'Generating Event Data with Intentional Features for Process Streams',
         author = 'Andrea Maldonado',
         author_email = 'andreamalher.works@gmail.com',
         license = 'MIT',
@@ -33,7 +33,7 @@ setup(
             'pm4py~=2.7.2',
             'imbalanced-learn~=0.12.4',
             ],
-        packages = ['gedi'],
+        packages = ['gedi_streams'],
         classifiers=[
             'Development Status :: 3 - Alpha',      # Chose either "3 - Alpha", "4 - Beta" or "5 - Production/Stable" as the current state of your package
             'Intended Audience :: Science/Research',      # Define that your audience are developers
