@@ -2,7 +2,7 @@
 .ipynb_checkpoints/
 build/
 data/
-gedi.egg-info/
+gedi_streams.egg-info/
 notebooks/.ipynb_checkpoints/*
 output/
 smac3_output/
