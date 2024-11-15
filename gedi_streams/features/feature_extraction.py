@@ -13,13 +13,11 @@ from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from gedi_streams.utils.io_helpers import dump_features_json
 from gedi_streams.utils.column_mappings import column_mappings
 
-'''
 # Add the submodule to sys.path
 project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 submodule_path = os.path.join(project_root, "DistributedEventFactory")
 sys.path.append(submodule_path)
 from DistributedEventFactory.distributed_event_factory.event_factory import EventFactory
-'''
 
 def get_sortby_parameter(elem):
     number = int(elem.rsplit(".")[0].rsplit("_", 1)[1])
@@ -185,3 +183,10 @@ class FeatureExtraction(EventDataFile):
         dump_features_json(features, os.path.join(self.root_path,identifier))
         return features
 
+def DEF_wrapper():
+    event_factory = EventFactory()
+    (event_factory
+    .add_directory("./DistributedEventFactory/config/datasource/assemblyline")
+    .add_file("./DistributedEventFactory/config/simulation/stream.yaml")
+     .add_file("./DistributedEventFactory/config/sink/sink.yaml")
+    ).run()
