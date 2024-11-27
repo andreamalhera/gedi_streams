@@ -183,7 +183,19 @@ class FeatureExtraction(EventDataFile):
         dump_features_json(features, os.path.join(self.root_path,identifier))
         return features
 
-def DEF_wrapper():
+class QueueOutput:
+    def __init__(self, queue):
+        self.queue = queue
+
+    def write(self, msg):
+        self.queue.put(msg)
+
+    def flush(self):
+        # Flush is needed to avoid warnings about buffered output
+        pass
+
+def DEF_wrapper(output_queue):
+    sys.stdout = QueueOutput(output_queue)
     event_factory = EventFactory()
     (event_factory
     .add_directory("DistributedEventFactory/config/datasource/assemblyline/")
