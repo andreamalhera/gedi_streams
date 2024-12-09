@@ -1,3 +1,28 @@
-def play_DEF(model, config):
-    print("TODO: Play out a DEF stream here.")
-    pass #TODO: Play out a DEF stream here.
+import os
+import sys
+
+# Add the submodule to sys.path
+project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
+submodule_path = os.path.join(project_root, "DistributedEventFactory")
+sys.path.append(submodule_path)
+from DistributedEventFactory.distributed_event_factory.event_factory import EventFactory
+
+class QueueOutput:
+    def __init__(self, queue):
+        self.queue = queue
+
+    def write(self, msg):
+        self.queue.put(msg)
+
+    def flush(self):
+        # Flush is needed to avoid warnings about buffered output
+        pass
+
+def DEF_wrapper(output_queue):
+    sys.stdout = QueueOutput(output_queue)
+    event_factory = EventFactory()
+    (event_factory
+    .add_directory("DistributedEventFactory/config/datasource/assemblyline/")
+    .add_file("DistributedEventFactory/config/simulation/stream.yaml")
+    .add_file("DistributedEventFactory/config/sink/console-sink.yaml")
+    ).run()
