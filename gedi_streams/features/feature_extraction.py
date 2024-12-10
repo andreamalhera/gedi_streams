@@ -38,14 +38,14 @@ class FeatureExtraction(EventDataFile):
         try:
             start = dt.now()
             print("=========================== FeatureExtraction Computation===========================")
-
             print(f"INFO: Running with {ft_params}")
-
             if str(self.filename).endswith('csv'): # Returns dataframe from loaded metafeatures file
                 self._load_features()
-            elif isinstance(self.filename, list): # Computes metafeatures from list of files in directory
+            elif isinstance(self.filename, list) or str(self.filename).endswith('.xes'): # Computes metafeatures from list of files in directory
                 combined_features=pd.DataFrame()
-                if self.filename[0].endswith(".json"): # Aggregates feature results from multiple .json files
+                if isinstance(self.filename, str):
+                    self.filename = [self.filename]
+                elif self.filename[0].endswith(".json"): # Aggregates feature results from multiple .json files
                     self._aggregate_features()
                 elif self.filename[0].endswith(".xes"): # Computes metafeatures for list of .xes files
                     self.filename = [ filename for filename in self.filename if filename.endswith(".xes")]
@@ -176,23 +176,3 @@ class FeatureExtraction(EventDataFile):
         print(f"  DONE: {file_path}. FEEED computed {feature_set}")
         dump_features_json(features, os.path.join(self.root_path,identifier))
         return features
-
-class QueueOutput:
-    def __init__(self, queue):
-        self.queue = queue
-
-    def write(self, msg):
-        self.queue.put(msg)
-
-    def flush(self):
-        # Flush is needed to avoid warnings about buffered output
-        pass
-
-def DEF_wrapper(output_queue):
-    sys.stdout = QueueOutput(output_queue)
-    event_factory = EventFactory()
-    (event_factory
-    .add_directory("DistributedEventFactory/config/datasource/assemblyline/")
-    .add_file("DistributedEventFactory/config/simulation/stream.yaml")
-    .add_file("DistributedEventFactory/config/sink/console-sink.yaml")
-    ).run()

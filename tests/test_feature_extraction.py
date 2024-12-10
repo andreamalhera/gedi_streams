@@ -17,26 +17,26 @@ def test_FeatureExtraction():
     assert result == VALIDATION_OUTPUT
 
 def test_DEF_wrapper():
-    WINDOW_SIZE = 10
+    WINDOW_SIZE = 20
     INPUT_PARAMS = {'pipeline_step': 'feature_extraction','input_path': 'data/test', 'feature_params': {'feature_set': ['ratio_unique_traces_per_trace', 'ratio_most_common_variant', 'ratio_top_10_variants', 'epa_normalized_variant_entropy', 'epa_normalized_sequence_entropy', 'epa_normalized_sequence_entropy_linear_forgetting', 'epa_normalized_sequence_entropy_exponential_forgetting']}, 'output_path': 'output/plots', 'real_eventlog_path': 'data/BaselineED_feat.csv', 'plot_type': 'boxplot', 'font_size': 24, 'boxplot_width': 10}
     FEATURE_SET = INPUT_PARAMS.get('feature_params').get('feature_set')
     OUTPUT_PATH = os.path.join("data","test",f"stream_window{WINDOW_SIZE}.xes")
     # Start the two processes
     window = []
     output_queue = Queue()
+    features_queue = Queue()
 
 
     p1 = Process(target=DEF_wrapper, args=(output_queue,))
     p1.start()
-
 
     while len(window) < WINDOW_SIZE:
         window.append(output_queue.get())
 
     el = convert_to_eventlog(window, output_path=OUTPUT_PATH)
 
-    import pdb; pdb.set_trace()
-    p2 = Process(target=extract_features, args = (OUTPUT_PATH,FEATURE_SET,))
+    INPUT_PARAMS['input_path'] = OUTPUT_PATH
+    p2 = Process(target=FeatureExtraction, kwargs = {'ft_params': INPUT_PARAMS})#, args = (OUTPUT_PATH, FEATURE_SET))
     p2.start()
     #stop_event.set()  # Signal the  process to stop
     p1.terminate()
