@@ -1,6 +1,6 @@
 from feeed.feature_extractor import extract_features
 from gedi_streams.features.feature_extraction import FeatureExtraction
-from gedi_streams.generator.simulation import DEF_wrapper
+from gedi_streams.generator.simulation import play_DEFact
 from gedi_streams.utils.stream_to_eventlog import convert_to_eventlog
 from multiprocessing import Process, Queue
 
@@ -20,14 +20,14 @@ def test_DEF_wrapper():
     WINDOW_SIZE = 20
     INPUT_PARAMS = {'pipeline_step': 'feature_extraction','input_path': 'data/test', 'feature_params': {'feature_set': ['ratio_unique_traces_per_trace', 'ratio_most_common_variant', 'ratio_top_10_variants', 'epa_normalized_variant_entropy', 'epa_normalized_sequence_entropy', 'epa_normalized_sequence_entropy_linear_forgetting', 'epa_normalized_sequence_entropy_exponential_forgetting']}, 'output_path': 'output/plots', 'real_eventlog_path': 'data/BaselineED_feat.csv', 'plot_type': 'boxplot', 'font_size': 24, 'boxplot_width': 10}
     FEATURE_SET = INPUT_PARAMS.get('feature_params').get('feature_set')
-    OUTPUT_PATH = os.path.join("data","test",f"stream_window{WINDOW_SIZE}.xes")
+    OUTPUT_PATH = os.path.join("data","test","stream_windows",f"stream_window{WINDOW_SIZE}.xes")
     # Start the two processes
     window = []
     output_queue = Queue()
     features_queue = Queue()
 
     # TODO: Move funtionality to main and feature extraction. This should be a test only.
-    p1 = Process(target=DEF_wrapper, args=(output_queue,))
+    p1 = Process(target=play_DEFact, kwargs={'queue': output_queue})
     p1.start()
 
     while len(window) < WINDOW_SIZE:

@@ -26,7 +26,7 @@ from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_fe
 from gedi_streams.utils.io_helpers import read_csvs
 from gedi_streams.utils.column_mappings import column_mappings
 from gedi_streams.generator.model import create_PTLG
-from gedi_streams.generator.simulation import play_DEF
+from gedi_streams.generator.simulation import play_DEFact
 from xml.dom import minidom
 
 RANDOM_SEED = 10
@@ -347,8 +347,8 @@ class GenerateEventLogs():
 
         def simulate_Model(self, model, config):
             random.seed(RANDOM_SEED)
-            if self.generator.simulation_method == 'DEF':
-                log = play_DEF(model, config)
+            if self.generator.simulation_method == 'DEFact':
+                log = play_DEFact(model, config)
             elif self.generator.simulation_method == 'PTLG':
                 log = play_out(model, parameters={"num_traces": config["num_traces"]})
                 for i, trace in enumerate(log):

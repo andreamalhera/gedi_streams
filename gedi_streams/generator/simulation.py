@@ -18,11 +18,15 @@ class QueueOutput:
         # Flush is needed to avoid warnings about buffered output
         pass
 
-def DEF_wrapper(output_queue):
-    sys.stdout = QueueOutput(output_queue)
-    event_factory = EventFactory()
-    (event_factory
-    .add_directory("DistributedEventFactory/config/datasource/assemblyline/")
-    .add_file("DistributedEventFactory/config/simulation/stream.yaml")
-    .add_file("DistributedEventFactory/config/sink/console-sink.yaml")
-    ).run()
+def play_DEFact(model=None, config=None, queue=None):
+    if queue is None:
+        ##TODO: Play out a DEFact stream here.
+        pass
+    else:
+        sys.stdout = QueueOutput(queue)
+        event_factory = EventFactory()
+        (event_factory
+        .add_directory("DistributedEventFactory/config/datasource/assemblyline/")
+        .add_file("DistributedEventFactory/config/simulation/stream.yaml")
+        .add_file("DistributedEventFactory/config/sink/console-sink.yaml")
+        ).run()
