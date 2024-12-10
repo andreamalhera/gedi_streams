@@ -26,7 +26,7 @@ def test_DEF_wrapper():
     output_queue = Queue()
     features_queue = Queue()
 
-
+    # TODO: Move funtionality to main and feature extraction. This should be a test only.
     p1 = Process(target=DEF_wrapper, args=(output_queue,))
     p1.start()
 
