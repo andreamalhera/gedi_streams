@@ -34,10 +34,16 @@ def test_DEF_wrapper():
         window.append(output_queue.get())
 
     el = convert_to_eventlog(window, output_path=OUTPUT_PATH)
+    print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
 
     INPUT_PARAMS['input_path'] = OUTPUT_PATH
-    p2 = Process(target=FeatureExtraction, kwargs = {'ft_params': INPUT_PARAMS})#, args = (OUTPUT_PATH, FEATURE_SET))
+    # TODO: Use directly event log instead of writing into memory
+    p2 = Process(target=FeatureExtraction, kwargs = {'ft_params': INPUT_PARAMS, 'queue': features_queue})
     p2.start()
+
+    features = features_queue.get()
+    print(f"   SUCCESS: Extracted {len(features)} features from stream window:", features.iloc[0].to_dict())
+
     #stop_event.set()  # Signal the  process to stop
     p1.terminate()
 

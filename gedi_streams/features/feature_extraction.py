@@ -31,7 +31,7 @@ class UnsupportedFileExtensionError(Exception):
     pass
 
 class FeatureExtraction(EventDataFile):
-    def __init__(self, filename=None, folder_path='data/event_log', params=None, logs=None, ft_params=None):
+    def __init__(self, filename=None, folder_path='data/event_log', params=None, logs=None, ft_params=None, queue=None):
         super().__init__(filename, folder_path)
         self._parse_params(ft_params)
 
@@ -100,10 +100,12 @@ class FeatureExtraction(EventDataFile):
                 self.feat = combined_features
         except (IOError, FileNotFoundError) as err:
             print(err)
-            print(f"Cannot load {self.filepath}. Double check for file or change config 'load_results' to false")
+            print(f"ERROR: Cannot load {self.filepath}. Double check for file or change config 'load_results' to false")
         else:
             print(f"SUCCESS: FeatureExtraction took {dt.now()-start} sec. Saved {len(self.feat.columns)-1} features for {len(self.feat)} in {self.filepath}")
             print("=========================== ~ FeatureExtraction Computation=========================")
+            if queue is not None:
+                queue.put(self.feat)
 
     def _parse_params(self, params):
         if params == None:
