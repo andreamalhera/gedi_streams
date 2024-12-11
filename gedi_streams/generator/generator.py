@@ -14,6 +14,7 @@ from smac import HyperparameterOptimizationFacade, Scenario
 from gedi_streams.features.feature_extraction import FeatureExtraction, compute_features_from_log
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
 from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, SIMULATION_METHOD
+from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
 from gedi_streams.utils.io_helpers import read_csvs
 from gedi_streams.utils.column_mappings import column_mappings
@@ -357,19 +358,22 @@ def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='
         while len(window) < window_size:
             window.append(output_queue.get())
 
-        el = window_to_eventlog(window, output_path=OUTPUT_PATH)
+        el = window_to_eventlog(window)
         #print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
 
         input_params['input_path'] = OUTPUT_PATH
-        # TODO: Use directly event log instead of writing into memory
-        features_per_window = FeatureExtraction(ft_params=input_params).feat
+        feature_set = input_params.get(FEATURE_PARAMS).get(FEATURE_SET)
+        # features_per_window = FeatureExtraction(ft_params=input_params).feat
+        features_per_window = compute_features_from_log(feature_set, el)
+        features_per_window['size_num'] = str(window_size) + '_' + str(window_num)
+
         all_features.append(features_per_window)
         print(f"   SUCCESS: Window {window_num}/{n_windows} processed successfully.",
-              f"Extracted {len(features_per_window.columns)-1} features from stream window")
+              f"Extracted {len(features_per_window)} features from stream window")
 
         window = []
 
     p1.terminate()
     p1.join()
-    print("SUCCESS: All windows processed. Total features extracted:", len(all_features))
+    print("SUCCESS: All windows processed. Total features extracted:", len(all_features), all_features)
     return all_features
