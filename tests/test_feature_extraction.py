@@ -46,5 +46,6 @@ def test_compute_features_from_log():
 
     result = compute_features_from_log(feature_set=FEATURE_SET, log=prepare_log())
 
+    print(result)
     assert result.keys() == set(FEATURE_SET)
     assert result == {'n_traces': 1, 'trace_len_min': 2, 'ratio_most_common_variant': 1.0, 'n_unique_activities': 2, 'n_unique_start_activities': 1, 'n_unique_end_activities': 1, 'eventropy_trace': -0.0, 'epa_variant_entropy': 0.0}
