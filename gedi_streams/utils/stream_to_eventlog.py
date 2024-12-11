@@ -1,6 +1,7 @@
 from pm4py.objects.log.obj import EventLog, Trace, Event
 from pm4py import write_xes
 import ast
+import pandas as pd
 
 def convert_to_eventlog(input_data: list, output_path: str="") -> EventLog:
     # Step 1: Parse the strings into dictionaries

@@ -48,15 +48,15 @@ class FeatureExtraction(EventDataFile):
             start = dt.now()
             print("=========================== FeatureExtraction Computation===========================")
             print(f"INFO: Running with {ft_params}")
-            if str(self.filename).endswith('csv'): # Returns dataframe from loaded metafeatures file
+            if str(self.filename).endswith('csv'): # Returns dataframe from loaded features file
                 self._load_features()
-            elif isinstance(self.filename, list) or str(self.filename).endswith('.xes'): # Computes metafeatures from list of files in directory
+            elif isinstance(self.filename, list) or str(self.filename).endswith('.xes'): # Computes features from list of files in directory
                 combined_features=pd.DataFrame()
                 if isinstance(self.filename, str):
                     self.filename = [self.filename]
                 elif self.filename[0].endswith(".json"): # Aggregates feature results from multiple .json files
                     self._aggregate_features()
-                elif self.filename[0].endswith(".xes"): # Computes metafeatures for list of .xes files
+                elif self.filename[0].endswith(".xes"): # Computes features for list of .xes files
                     self.filename = [ filename for filename in self.filename if filename.endswith(".xes")]
                 #TODO: Implement if self.filename[0].endswith(".<window format>") for Event Streams
                 else:
@@ -89,7 +89,7 @@ class FeatureExtraction(EventDataFile):
 
                 except KeyError as error:
                     print("Ignoring KeyError", error)
-                    # Aggregates metafeatures in saved Jsons into dataframe
+                    # Aggregates features in saved Jsons into dataframe
                     path_to_json = f"output/features/{str(self.root_path).split('/',1)[1]}"
                     df = pd.DataFrame()
                     # Iterate over the files in the directory
@@ -186,15 +186,15 @@ class FeatureExtraction(EventDataFile):
         dump_features_json(features, os.path.join(self.root_path,identifier))
         return features
 
-def compute_metafeatures(feature_set, log):
+def compute_features_from_log(feature_set, log):
     for i, trace in enumerate(log):
         trace.attributes['concept:name'] = str(i)
         for j, event in enumerate(trace):
             event['time:timestamp'] = dt.fromtimestamp(j * 1000)
             event['lifecycle:transition'] = "complete"
 
-    metafeatures_computation = {}
+    features_computation = {}
     for ft_name in feature_set:
         ft_type = feature_type(ft_name)
-        metafeatures_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
-    return metafeatures_computation
+        features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
+    return features_computation

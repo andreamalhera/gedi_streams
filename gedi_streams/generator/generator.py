@@ -11,7 +11,7 @@ from functools import partial
 from pm4py import write_xes
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
-from gedi_streams.features.feature_extraction import FeatureExtraction, compute_metafeatures
+from gedi_streams.features.feature_extraction import FeatureExtraction, compute_features_from_log
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
 from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, SIMULATION_METHOD
 from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
@@ -236,7 +236,7 @@ class GenerateEventLogs():
         write_xes(log_config['log'], save_path)
         add_extension_before_traces(save_path)
         print("SUCCESS: Saved generated event log in", save_path)
-        features_to_dump = log_config['metafeatures']
+        features_to_dump = log_config['features']
 
         #TODO: Replace hotfix
         if features_to_dump.get('ratio_unique_traces_per_trace'):#HOTFIX
@@ -307,10 +307,10 @@ class GenerateEventLogs():
 
         def eval_log(self, log):
             random.seed(RANDOM_SEED)
-            metafeatures = compute_metafeatures(self.objectives.keys(), log)
+            features = compute_features_from_log(self.objectives.keys(), log)
             log_evaluation = {}
             for key in self.objectives.keys():
-                log_evaluation[key] = abs(self.objectives[key] - metafeatures[key])
+                log_evaluation[key] = abs(self.objectives[key] - features[key])
             return log_evaluation
 
         def generate_optimized_log(self, config):
@@ -319,11 +319,11 @@ class GenerateEventLogs():
             log = self.simulate_Model(model, config)
 
             random.seed(RANDOM_SEED)
-            metafeatures = compute_metafeatures( self.objectives.keys(), log)
+            features = compute_features_from_log( self.objectives.keys(), log)
             return {
                 "configuration": config,
                 "log": log,
-                "metafeatures": metafeatures,
+                "features": features,
             }
 
         def simulate_Model(self, model, config):
