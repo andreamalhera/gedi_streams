@@ -352,7 +352,6 @@ def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='
     all_features = []
 
     for window_num in range(1, n_windows + 1):
-        OUTPUT_PATH = os.path.join("data", "test", "stream_windows", f"stream_window{window_size}_{window_num}.xes")
         print(f"    INFO: Processing window {window_num}/{n_windows}...")
 
         while len(window) < window_size:
