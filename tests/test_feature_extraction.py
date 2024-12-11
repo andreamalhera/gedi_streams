@@ -1,5 +1,7 @@
 from feeed.feature_extractor import extract_features
 from gedi_streams.features.feature_extraction import FeatureExtraction
+#TODO move test to generation
+from gedi_streams.generator.generator import DEFact_wrapper
 from gedi_streams.generator.simulation import play_DEFact
 from gedi_streams.utils.stream_to_eventlog import convert_to_eventlog
 from multiprocessing import Process, Queue
@@ -16,44 +18,11 @@ def test_FeatureExtraction():
     result = features.feat.round(2).to_dict()
     assert result == VALIDATION_OUTPUT
 
-def test_DEFact_wrapper():
+def test_DEFact_feature_extraction():
     N_WINDOWS = 10
-    WINDOW_SIZE = 20
+    WINDOW_SIZE = 30
     INPUT_PARAMS = {'pipeline_step': 'feature_extraction','input_path': 'data/test', 'feature_params': {'feature_set': ['n_traces','ratio_unique_traces_per_trace', 'ratio_most_common_variant', 'ratio_top_10_variants', 'epa_normalized_variant_entropy', 'epa_normalized_sequence_entropy', 'epa_normalized_sequence_entropy_linear_forgetting', 'epa_normalized_sequence_entropy_exponential_forgetting']}, 'output_path': 'output/plots', 'real_eventlog_path': 'data/BaselineED_feat.csv', 'plot_type': 'boxplot', 'font_size': 24, 'boxplot_width': 10}
     FEATURE_SET = INPUT_PARAMS.get('feature_params').get('feature_set')
-    all_features = pd.DataFrame()
 
-    # TODO: Move funtionality to main and feature extraction. This should be a test only.
-    output_queue = Queue()
-
-    p1 = Process(target=play_DEFact, kwargs={'queue': output_queue})
-    p1.start()
-
-    window = []
-    features_list = []
-
-    for window_num in range(1, N_WINDOWS + 1):
-        OUTPUT_PATH = os.path.join("data", "test", "stream_windows", f"stream_window{WINDOW_SIZE}_{window_num}.xes")
-        print(f"    INFO: Processing window {window_num}/{N_WINDOWS}...")
-
-        while len(window) < WINDOW_SIZE:
-            window.append(output_queue.get())
-
-        el = convert_to_eventlog(window, output_path=OUTPUT_PATH)
-        #print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
-
-        INPUT_PARAMS['input_path'] = OUTPUT_PATH
-        # TODO: Use directly event log instead of writing into memory
-        features_per_window = FeatureExtraction(ft_params=INPUT_PARAMS).feat
-        features_list.append(features_per_window)
-        print(f"   SUCCESS: Window {window_num}/{N_WINDOWS} processed successfully.",
-              f"Extracted {len(features_per_window)} features from stream window")
-
-        window = []
-
-    p1.terminate()
-    p1.join()
-    all_features = pd.concat(features_list, ignore_index=True)
-
-    print("SUCCESS: All windows processed. Total features extracted:", len(all_features))
-    assert len(features_list) == N_WINDOWS
+    all_features = DEFact_wrapper(N_WINDOWS, INPUT_PARAMS, WINDOW_SIZE, FEATURE_SET)
+    assert len(all_features) == N_WINDOWS

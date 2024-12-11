@@ -20,13 +20,16 @@ from functools import partial
 from pm4py import write_xes
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
+from gedi_streams.features.feature_extraction import FeatureExtraction
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
 from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, SIMULATION_METHOD
 from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
 from gedi_streams.utils.io_helpers import read_csvs
 from gedi_streams.utils.column_mappings import column_mappings
+from gedi_streams.utils.stream_to_eventlog import convert_to_eventlog
 from gedi_streams.generator.model import create_PTLG
 from gedi_streams.generator.simulation import play_DEFact
+from multiprocessing import Process, Queue
 from xml.dom import minidom
 
 RANDOM_SEED = 10
@@ -359,3 +362,36 @@ class GenerateEventLogs():
             else:
                raise NotImplementedError(f"Play out method {self.generator.simulation_method} not implemented.")
             return log
+
+def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='FeatureExtraction'):
+    output_queue = Queue()
+
+    p1 = Process(target=play_DEFact, kwargs={'queue': output_queue})
+    p1.start()
+
+    window = []
+    all_features = []
+
+    for window_num in range(1, n_windows + 1):
+        OUTPUT_PATH = os.path.join("data", "test", "stream_windows", f"stream_window{window_size}_{window_num}.xes")
+        print(f"    INFO: Processing window {window_num}/{n_windows}...")
+
+        while len(window) < window_size:
+            window.append(output_queue.get())
+
+        el = convert_to_eventlog(window, output_path=OUTPUT_PATH)
+        #print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
+
+        input_params['input_path'] = OUTPUT_PATH
+        # TODO: Use directly event log instead of writing into memory
+        features_per_window = FeatureExtraction(ft_params=input_params).feat
+        all_features.append(features_per_window)
+        print(f"   SUCCESS: Window {window_num}/{n_windows} processed successfully.",
+              f"Extracted {len(features_per_window.columns)-1} features from stream window")
+
+        window = []
+
+    p1.terminate()
+    p1.join()
+    print("SUCCESS: All windows processed. Total features extracted:", len(all_features))
+    return all_features
