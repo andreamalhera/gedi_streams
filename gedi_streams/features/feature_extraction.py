@@ -6,6 +6,15 @@ import sys
 
 from datetime import datetime as dt
 from feeed.feature_extractor import extract_features
+from feeed.activities import Activities as activities
+from feeed.end_activities import EndActivities as end_activities
+from feeed.epa_based import Epa_based as epa_based
+from feeed.eventropies import Eventropies as eventropies
+from feeed.feature_extractor import feature_type
+from feeed.simple_stats import SimpleStats as simple_stats
+from feeed.start_activities import StartActivities as start_activities
+from feeed.trace_length import TraceLength as trace_length
+from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
 from pathlib import Path
 from gedi_streams.utils.param_keys import INPUT_PATH
@@ -176,3 +185,16 @@ class FeatureExtraction(EventDataFile):
         print(f"  DONE: {file_path}. FEEED computed {feature_set}")
         dump_features_json(features, os.path.join(self.root_path,identifier))
         return features
+
+def compute_metafeatures(feature_set, log):
+    for i, trace in enumerate(log):
+        trace.attributes['concept:name'] = str(i)
+        for j, event in enumerate(trace):
+            event['time:timestamp'] = dt.fromtimestamp(j * 1000)
+            event['lifecycle:transition'] = "complete"
+
+    metafeatures_computation = {}
+    for ft_name in feature_set:
+        ft_type = feature_type(ft_name)
+        metafeatures_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
+    return metafeatures_computation

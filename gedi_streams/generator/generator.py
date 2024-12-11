@@ -7,20 +7,11 @@ import xml.etree.ElementTree as ET
 
 from ConfigSpace import Configuration, ConfigurationSpace
 from datetime import datetime as dt
-from feeed.activities import Activities as activities
-from feeed.end_activities import EndActivities as end_activities
-from feeed.epa_based import Epa_based as epa_based
-from feeed.eventropies import Eventropies as eventropies
-from feeed.feature_extractor import feature_type
-from feeed.simple_stats import SimpleStats as simple_stats
-from feeed.start_activities import StartActivities as start_activities
-from feeed.trace_length import TraceLength as trace_length
-from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
 from pm4py import write_xes
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
-from gedi_streams.features.feature_extraction import FeatureExtraction
+from gedi_streams.features.feature_extraction import FeatureExtraction, compute_metafeatures
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
 from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, SIMULATION_METHOD
 from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
@@ -316,24 +307,11 @@ class GenerateEventLogs():
 
         def eval_log(self, log):
             random.seed(RANDOM_SEED)
-            metafeatures = self.compute_metafeatures(self.objectives.keys(), log)
+            metafeatures = compute_metafeatures(self.objectives.keys(), log)
             log_evaluation = {}
             for key in self.objectives.keys():
                 log_evaluation[key] = abs(self.objectives[key] - metafeatures[key])
             return log_evaluation
-
-        def compute_metafeatures(self, feature_set, log):
-            for i, trace in enumerate(log):
-                trace.attributes['concept:name'] = str(i)
-                for j, event in enumerate(trace):
-                    event['time:timestamp'] = dt.fromtimestamp(j * 1000)
-                    event['lifecycle:transition'] = "complete"
-
-            metafeatures_computation = {}
-            for ft_name in feature_set:
-                ft_type = feature_type(ft_name)
-                metafeatures_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
-            return metafeatures_computation
 
         def generate_optimized_log(self, config):
             ''' Returns event log from given configuration'''
@@ -341,7 +319,7 @@ class GenerateEventLogs():
             log = self.simulate_Model(model, config)
 
             random.seed(RANDOM_SEED)
-            metafeatures = self.compute_metafeatures( self.objectives.keys(), log)
+            metafeatures = compute_metafeatures( self.objectives.keys(), log)
             return {
                 "configuration": config,
                 "log": log,
