@@ -17,7 +17,7 @@ from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT
 from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
 from gedi_streams.utils.io_helpers import read_csvs
 from gedi_streams.utils.column_mappings import column_mappings
-from gedi_streams.utils.stream_to_eventlog import convert_to_eventlog
+from gedi_streams.utils.data_conversions import window_to_eventlog
 from gedi_streams.generator.model import create_PTLG
 from gedi_streams.generator.simulation import play_DEFact
 from multiprocessing import Process, Queue
@@ -357,7 +357,7 @@ def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='
         while len(window) < window_size:
             window.append(output_queue.get())
 
-        el = convert_to_eventlog(window, output_path=OUTPUT_PATH)
+        el = window_to_eventlog(window, output_path=OUTPUT_PATH)
         #print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
 
         input_params['input_path'] = OUTPUT_PATH

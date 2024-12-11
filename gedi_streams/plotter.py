@@ -460,7 +460,7 @@ class GenerationPlotter(object):
                         [v[k][idx], gen_entry[k].values[0]],
                         c="green", alpha=0.25)
                 # Plot textual annotation
-                axes[idx_ax].annotate(gen_entry['log'].values[0], 
+                axes[idx_ax].annotate(gen_entry['log'].values[0],
                                       (gen_entry[reference_feature].values[0], gen_entry[k].values[0]), 
                                       fontsize=5)
 

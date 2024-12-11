@@ -22,6 +22,19 @@ from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from gedi_streams.utils.io_helpers import dump_features_json
 from gedi_streams.utils.column_mappings import column_mappings
 
+def compute_features_from_log(feature_set, log):
+    for i, trace in enumerate(log):
+        trace.attributes['concept:name'] = str(i)
+        for j, event in enumerate(trace):
+            event['time:timestamp'] = dt.fromtimestamp(j * 1000)
+            event['lifecycle:transition'] = "complete"
+
+    features_computation = {}
+    for ft_name in feature_set:
+        ft_type = feature_type(ft_name)
+        features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
+    return features_computation
+
 def get_sortby_parameter(elem):
     number = int(elem.rsplit(".")[0].rsplit("_", 1)[1])
     return number
@@ -185,16 +198,3 @@ class FeatureExtraction(EventDataFile):
         print(f"  DONE: {file_path}. FEEED computed {feature_set}")
         dump_features_json(features, os.path.join(self.root_path,identifier))
         return features
-
-def compute_features_from_log(feature_set, log):
-    for i, trace in enumerate(log):
-        trace.attributes['concept:name'] = str(i)
-        for j, event in enumerate(trace):
-            event['time:timestamp'] = dt.fromtimestamp(j * 1000)
-            event['lifecycle:transition'] = "complete"
-
-    features_computation = {}
-    for ft_name in feature_set:
-        ft_type = feature_type(ft_name)
-        features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
-    return features_computation
