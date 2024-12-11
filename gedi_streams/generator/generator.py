@@ -313,13 +313,13 @@ class GenerateEventLogs():
 
         def eval_log(self, log):
             random.seed(RANDOM_SEED)
-            metafeatures = self.compute_metafeatures(log)
+            metafeatures = self.compute_metafeatures(self.objectives.keys(), log)
             log_evaluation = {}
             for key in self.objectives.keys():
                 log_evaluation[key] = abs(self.objectives[key] - metafeatures[key])
             return log_evaluation
 
-        def compute_metafeatures(self, log):
+        def compute_metafeatures(self, feature_set, log):
             for i, trace in enumerate(log):
                 trace.attributes['concept:name'] = str(i)
                 for j, event in enumerate(trace):
@@ -327,7 +327,7 @@ class GenerateEventLogs():
                     event['lifecycle:transition'] = "complete"
 
             metafeatures_computation = {}
-            for ft_name in self.objectives.keys():
+            for ft_name in feature_set:
                 ft_type = feature_type(ft_name)
                 metafeatures_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
             return metafeatures_computation
@@ -338,7 +338,7 @@ class GenerateEventLogs():
             log = self.simulate_Model(model, config)
 
             random.seed(RANDOM_SEED)
-            metafeatures = self.compute_metafeatures(log)
+            metafeatures = self.compute_metafeatures( self.objectives.keys(), log)
             return {
                 "configuration": config,
                 "log": log,
