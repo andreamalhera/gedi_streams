@@ -104,8 +104,6 @@ class FeatureExtraction(EventDataFile):
         else:
             print(f"SUCCESS: FeatureExtraction took {dt.now()-start} sec. Saved {len(self.feat.columns)-1} features for {len(self.feat)} in {self.filepath}")
             print("=========================== ~ FeatureExtraction Computation=========================")
-            if queue is not None:
-                queue.put(self.feat)
 
     def _parse_params(self, params):
         if params == None:
