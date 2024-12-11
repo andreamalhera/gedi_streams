@@ -16,40 +16,49 @@ def test_FeatureExtraction():
     result = features.feat.round(2).to_dict()
     assert result == VALIDATION_OUTPUT
 
-def test_DEF_wrapper():
+def test_DEFact_wrapper():
+    N_WINDOWS = 10
     WINDOW_SIZE = 20
     INPUT_PARAMS = {'pipeline_step': 'feature_extraction','input_path': 'data/test', 'feature_params': {'feature_set': ['ratio_unique_traces_per_trace', 'ratio_most_common_variant', 'ratio_top_10_variants', 'epa_normalized_variant_entropy', 'epa_normalized_sequence_entropy', 'epa_normalized_sequence_entropy_linear_forgetting', 'epa_normalized_sequence_entropy_exponential_forgetting']}, 'output_path': 'output/plots', 'real_eventlog_path': 'data/BaselineED_feat.csv', 'plot_type': 'boxplot', 'font_size': 24, 'boxplot_width': 10}
     FEATURE_SET = INPUT_PARAMS.get('feature_params').get('feature_set')
-    OUTPUT_PATH = os.path.join("data","test","stream_windows",f"stream_window{WINDOW_SIZE}.xes")
-    # Start the two processes
-    window = []
-    output_queue = Queue()
-    features_queue = Queue()
+    all_features = pd.DataFrame()
 
-    # TODO: Move funtionality to main and feature extraction. This should be a test only.
-    p1 = Process(target=play_DEFact, kwargs={'queue': output_queue})
-    p1.start()
+    for window_num in range(1, N_WINDOWS + 1):
+        OUTPUT_PATH = os.path.join("data", "test", "stream_windows", f"stream_window{WINDOW_SIZE}_{window_num}.xes")
+        print(f"Processing window {window_num}/{N_WINDOWS}...")
 
-    while len(window) < WINDOW_SIZE:
-        window.append(output_queue.get())
+        window = []
+        output_queue = Queue()
+        features_queue = Queue()
 
-    el = convert_to_eventlog(window, output_path=OUTPUT_PATH)
-    print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
+        # TODO: Move funtionality to main and feature extraction. This should be a test only.
+        p1 = Process(target=play_DEFact, kwargs={'queue': output_queue})
+        p1.start()
 
-    INPUT_PARAMS['input_path'] = OUTPUT_PATH
-    # TODO: Use directly event log instead of writing into memory
-    p2 = Process(target=FeatureExtraction, kwargs = {'ft_params': INPUT_PARAMS, 'queue': features_queue})
-    p2.start()
+        while len(window) < WINDOW_SIZE:
+            window.append(output_queue.get())
 
-    features = features_queue.get()
-    print(f"   SUCCESS: Extracted {len(features)} features from stream window:", features.iloc[0].to_dict())
+        el = convert_to_eventlog(window, output_path=OUTPUT_PATH)
+        print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
 
-    #stop_event.set()  # Signal the  process to stop
-    p1.terminate()
+        INPUT_PARAMS['input_path'] = OUTPUT_PATH
+        # TODO: Use directly event log instead of writing into memory
+        p2 = Process(target=FeatureExtraction, kwargs = {'ft_params': INPUT_PARAMS, 'queue': features_queue})
+        p2.start()
 
-    # Wait for both processes to complete
-    p1.join()
-    p2.join()
+        features = features_queue.get()
+        print(f"   SUCCESS: Extracted {len(features)} features from stream window:", features.iloc[0].to_dict())
+        all_features = pd.concat([all_features, features], ignore_index=True)
 
-    print("All processes complete.")
+        #stop_event.set()  # Signal the  process to stop
+        p1.terminate()
+        p2.terminate()
+
+        # Wait for both processes to complete
+        p1.join()
+        p2.join()
+
+        print(f"Window {window_num}/{N_WINDOWS} processed successfully.\n")
+
+    print("All windows processed. Total features extracted:", len(all_features), all_features)
     assert True
