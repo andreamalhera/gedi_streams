@@ -5,22 +5,22 @@ import os
 import sys
 
 from datetime import datetime as dt
-from feeed.feature_extractor import extract_features
 from feeed.activities import Activities as activities
 from feeed.end_activities import EndActivities as end_activities
 from feeed.epa_based import Epa_based as epa_based
 from feeed.eventropies import Eventropies as eventropies
+from feeed.feature_extractor import extract_features
 from feeed.feature_extractor import feature_type
 from feeed.simple_stats import SimpleStats as simple_stats
 from feeed.start_activities import StartActivities as start_activities
 from feeed.trace_length import TraceLength as trace_length
 from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
-from pathlib import Path
+from gedi_streams.utils.column_mappings import column_mappings
+from gedi_streams.utils.io_helpers import dump_features_json
 from gedi_streams.utils.param_keys import INPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
-from gedi_streams.utils.io_helpers import dump_features_json
-from gedi_streams.utils.column_mappings import column_mappings
+from pathlib import Path
 
 def compute_features_from_log(feature_set, log):
     for i, trace in enumerate(log):
