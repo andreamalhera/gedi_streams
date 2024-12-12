@@ -5,19 +5,35 @@ import os
 import sys
 
 from datetime import datetime as dt
-from functools import partial
 from feeed.feature_extractor import extract_features
+from feeed.activities import Activities as activities
+from feeed.end_activities import EndActivities as end_activities
+from feeed.epa_based import Epa_based as epa_based
+from feeed.eventropies import Eventropies as eventropies
+from feeed.feature_extractor import feature_type
+from feeed.simple_stats import SimpleStats as simple_stats
+from feeed.start_activities import StartActivities as start_activities
+from feeed.trace_length import TraceLength as trace_length
+from feeed.trace_variant import TraceVariant as trace_variant
+from functools import partial
 from pathlib import Path
 from gedi_streams.utils.param_keys import INPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from gedi_streams.utils.io_helpers import dump_features_json
 from gedi_streams.utils.column_mappings import column_mappings
 
-# Add the submodule to sys.path
-project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
-submodule_path = os.path.join(project_root, "DistributedEventFactory")
-sys.path.append(submodule_path)
-from DistributedEventFactory.distributed_event_factory.event_factory import EventFactory
+def compute_features_from_log(feature_set, log):
+    for i, trace in enumerate(log):
+        trace.attributes['concept:name'] = str(i)
+        for j, event in enumerate(trace):
+            event['time:timestamp'] = dt.fromtimestamp(j * 1000)
+            event['lifecycle:transition'] = "complete"
+
+    features_computation = {}
+    for ft_name in feature_set:
+        ft_type = feature_type(ft_name)
+        features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
+    return features_computation
 
 def get_sortby_parameter(elem):
     number = int(elem.rsplit(".")[0].rsplit("_", 1)[1])
@@ -37,23 +53,23 @@ class UnsupportedFileExtensionError(Exception):
     pass
 
 class FeatureExtraction(EventDataFile):
-    def __init__(self, filename=None, folder_path='data/event_log', params=None, logs=None, ft_params=None):
+    def __init__(self, filename=None, folder_path='data/event_log', params=None, logs=None, ft_params=None, queue=None):
         super().__init__(filename, folder_path)
         self._parse_params(ft_params)
 
         try:
             start = dt.now()
             print("=========================== FeatureExtraction Computation===========================")
-
             print(f"INFO: Running with {ft_params}")
-
-            if str(self.filename).endswith('csv'): # Returns dataframe from loaded metafeatures file
+            if str(self.filename).endswith('csv'): # Returns dataframe from loaded features file
                 self._load_features()
-            elif isinstance(self.filename, list): # Computes metafeatures from list of files in directory
+            elif isinstance(self.filename, list) or str(self.filename).endswith('.xes'): # Computes features from list of files in directory
                 combined_features=pd.DataFrame()
-                if self.filename[0].endswith(".json"): # Aggregates feature results from multiple .json files
+                if isinstance(self.filename, str):
+                    self.filename = [self.filename]
+                elif self.filename[0].endswith(".json"): # Aggregates feature results from multiple .json files
                     self._aggregate_features()
-                elif self.filename[0].endswith(".xes"): # Computes metafeatures for list of .xes files
+                elif self.filename[0].endswith(".xes"): # Computes features for list of .xes files
                     self.filename = [ filename for filename in self.filename if filename.endswith(".xes")]
                 #TODO: Implement if self.filename[0].endswith(".<window format>") for Event Streams
                 else:
@@ -86,7 +102,7 @@ class FeatureExtraction(EventDataFile):
 
                 except KeyError as error:
                     print("Ignoring KeyError", error)
-                    # Aggregates metafeatures in saved Jsons into dataframe
+                    # Aggregates features in saved Jsons into dataframe
                     path_to_json = f"output/features/{str(self.root_path).split('/',1)[1]}"
                     df = pd.DataFrame()
                     # Iterate over the files in the directory
@@ -106,7 +122,7 @@ class FeatureExtraction(EventDataFile):
                 self.feat = combined_features
         except (IOError, FileNotFoundError) as err:
             print(err)
-            print(f"Cannot load {self.filepath}. Double check for file or change config 'load_results' to false")
+            print(f"ERROR: Cannot load {self.filepath}. Double check for file or change config 'load_results' to false")
         else:
             print(f"SUCCESS: FeatureExtraction took {dt.now()-start} sec. Saved {len(self.feat.columns)-1} features for {len(self.feat)} in {self.filepath}")
             print("=========================== ~ FeatureExtraction Computation=========================")
@@ -182,11 +198,3 @@ class FeatureExtraction(EventDataFile):
         print(f"  DONE: {file_path}. FEEED computed {feature_set}")
         dump_features_json(features, os.path.join(self.root_path,identifier))
         return features
-
-def DEF_wrapper():
-    event_factory = EventFactory()
-    (event_factory
-    .add_directory("DistributedEventFactory/config/datasource/assemblyline/")
-    .add_file("DistributedEventFactory/config/simulation/stream.yaml")
-    .add_file("DistributedEventFactory/config/sink/console-sink.yaml")
-    ).run()

@@ -7,26 +7,21 @@ import xml.etree.ElementTree as ET
 
 from ConfigSpace import Configuration, ConfigurationSpace
 from datetime import datetime as dt
-from feeed.activities import Activities as activities
-from feeed.end_activities import EndActivities as end_activities
-from feeed.epa_based import Epa_based as epa_based
-from feeed.eventropies import Eventropies as eventropies
-from feeed.feature_extractor import feature_type
-from feeed.simple_stats import SimpleStats as simple_stats
-from feeed.start_activities import StartActivities as start_activities
-from feeed.trace_length import TraceLength as trace_length
-from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
 from pm4py import write_xes
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
+from gedi_streams.features.feature_extraction import FeatureExtraction, compute_features_from_log
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
 from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, SIMULATION_METHOD
+from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from gedi_streams.utils.io_helpers import get_output_key_value_location, dump_features_json, compute_similarity
 from gedi_streams.utils.io_helpers import read_csvs
 from gedi_streams.utils.column_mappings import column_mappings
+from gedi_streams.utils.data_conversions import window_to_eventlog
 from gedi_streams.generator.model import create_PTLG
-from gedi_streams.generator.simulation import play_DEF
+from gedi_streams.generator.simulation import play_DEFact
+from multiprocessing import Process, Queue
 from xml.dom import minidom
 
 RANDOM_SEED = 10
@@ -242,7 +237,7 @@ class GenerateEventLogs():
         write_xes(log_config['log'], save_path)
         add_extension_before_traces(save_path)
         print("SUCCESS: Saved generated event log in", save_path)
-        features_to_dump = log_config['metafeatures']
+        features_to_dump = log_config['features']
 
         #TODO: Replace hotfix
         if features_to_dump.get('ratio_unique_traces_per_trace'):#HOTFIX
@@ -313,24 +308,11 @@ class GenerateEventLogs():
 
         def eval_log(self, log):
             random.seed(RANDOM_SEED)
-            metafeatures = self.compute_metafeatures(log)
+            features = compute_features_from_log(self.objectives.keys(), log)
             log_evaluation = {}
             for key in self.objectives.keys():
-                log_evaluation[key] = abs(self.objectives[key] - metafeatures[key])
+                log_evaluation[key] = abs(self.objectives[key] - features[key])
             return log_evaluation
-
-        def compute_metafeatures(self, log):
-            for i, trace in enumerate(log):
-                trace.attributes['concept:name'] = str(i)
-                for j, event in enumerate(trace):
-                    event['time:timestamp'] = dt.fromtimestamp(j * 1000)
-                    event['lifecycle:transition'] = "complete"
-
-            metafeatures_computation = {}
-            for ft_name in self.objectives.keys():
-                ft_type = feature_type(ft_name)
-                metafeatures_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
-            return metafeatures_computation
 
         def generate_optimized_log(self, config):
             ''' Returns event log from given configuration'''
@@ -338,17 +320,17 @@ class GenerateEventLogs():
             log = self.simulate_Model(model, config)
 
             random.seed(RANDOM_SEED)
-            metafeatures = self.compute_metafeatures(log)
+            features = compute_features_from_log( self.objectives.keys(), log)
             return {
                 "configuration": config,
                 "log": log,
-                "metafeatures": metafeatures,
+                "features": features,
             }
 
         def simulate_Model(self, model, config):
             random.seed(RANDOM_SEED)
-            if self.generator.simulation_method == 'DEF':
-                log = play_DEF(model, config)
+            if self.generator.simulation_method == 'DEFact':
+                log = play_DEFact(model, config)
             elif self.generator.simulation_method == 'PTLG':
                 log = play_out(model, parameters={"num_traces": config["num_traces"]})
                 for i, trace in enumerate(log):
@@ -359,3 +341,38 @@ class GenerateEventLogs():
             else:
                raise NotImplementedError(f"Play out method {self.generator.simulation_method} not implemented.")
             return log
+
+def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='FeatureExtraction'):
+    output_queue = Queue()
+
+    p1 = Process(target=play_DEFact, kwargs={'queue': output_queue})
+    p1.start()
+
+    window = []
+    all_features = []
+
+    for window_num in range(1, n_windows + 1):
+        print(f"    INFO: Processing window {window_num}/{n_windows}...")
+
+        while len(window) < window_size:
+            window.append(output_queue.get())
+
+        el = window_to_eventlog(window)
+        #print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
+
+        input_params['input_path'] = OUTPUT_PATH
+        feature_set = input_params.get(FEATURE_PARAMS).get(FEATURE_SET)
+        # features_per_window = FeatureExtraction(ft_params=input_params).feat
+        features_per_window = compute_features_from_log(feature_set, el)
+        features_per_window['size_num'] = str(window_size) + '_' + str(window_num)
+
+        all_features.append(features_per_window)
+        print(f"   SUCCESS: Window {window_num}/{n_windows} processed successfully.",
+              f"Extracted {len(features_per_window)} features from stream window")
+
+        window = []
+
+    p1.terminate()
+    p1.join()
+    print("SUCCESS: All windows processed. Total features extracted:", len(all_features), all_features)
+    return all_features
