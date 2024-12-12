@@ -2,6 +2,7 @@ import json
 import multiprocessing
 import pandas as pd
 import os
+import re
 import sys
 
 from datetime import datetime as dt
@@ -16,11 +17,22 @@ from feeed.start_activities import StartActivities as start_activities
 from feeed.trace_length import TraceLength as trace_length
 from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
+from gedi_streams.features.stream_features import StreamFeatures as stream_features
+from gedi_streams.features.stream_features import stream_feature_type
 from gedi_streams.utils.column_mappings import column_mappings
 from gedi_streams.utils.io_helpers import dump_features_json
 from gedi_streams.utils.param_keys import INPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from pathlib import Path
+
+def get_feature_type(ft_name):
+    try:
+        ft_type = feature_type(ft_name)
+    except ValueError:
+        ft_type = re.sub(r'([a-z])([A-Z])', r'\1_\2', stream_feature_type(ft_name)).lower()
+        #"stream_features"
+    return ft_type
+
 
 def compute_features_from_log(feature_set, log):
     for i, trace in enumerate(log):
@@ -31,7 +43,8 @@ def compute_features_from_log(feature_set, log):
 
     features_computation = {}
     for ft_name in feature_set:
-        ft_type = feature_type(ft_name)
+        ft_type = get_feature_type(ft_name)
+        #print(f"INFO: Computing {ft_type} for {ft_name}")
         features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
     return features_computation
 
