@@ -34,7 +34,7 @@ def get_feature_type(ft_name):
     return ft_type
 
 
-def compute_features_from_log(feature_set, log):
+def compute_features_from_event_data(feature_set, log):
     for i, trace in enumerate(log):
         trace.attributes['concept:name'] = str(i)
         for j, event in enumerate(trace):

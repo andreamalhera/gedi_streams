@@ -11,7 +11,7 @@ from functools import partial
 from pm4py import write_xes
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
-from gedi_streams.features.feature_extraction import FeatureExtraction, compute_features_from_log
+from gedi_streams.features.feature_extraction import FeatureExtraction, compute_features_from_event_data
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
 from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, SIMULATION_METHOD
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
@@ -308,7 +308,7 @@ class GenerateEventLogs():
 
         def eval_log(self, log):
             random.seed(RANDOM_SEED)
-            features = compute_features_from_log(self.objectives.keys(), log)
+            features = compute_features_from_event_data(self.objectives.keys(), log)
             log_evaluation = {}
             for key in self.objectives.keys():
                 log_evaluation[key] = abs(self.objectives[key] - features[key])
@@ -320,7 +320,7 @@ class GenerateEventLogs():
             log = self.simulate_Model(model, config)
 
             random.seed(RANDOM_SEED)
-            features = compute_features_from_log( self.objectives.keys(), log)
+            features = compute_features_from_event_data( self.objectives.keys(), log)
             return {
                 "configuration": config,
                 "log": log,
@@ -364,7 +364,7 @@ def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='
         input_params['input_path'] = OUTPUT_PATH
         feature_set = input_params.get(FEATURE_PARAMS).get(FEATURE_SET)
         # features_per_window = FeatureExtraction(ft_params=input_params).feat
-        features_per_window = compute_features_from_log(feature_set, el)
+        features_per_window = compute_features_from_event_data(feature_set, el)
         #features_per_window['size_num'] = str(window_size) + '_' + str(window_num)
 
         all_features.append(features_per_window)

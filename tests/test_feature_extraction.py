@@ -1,4 +1,4 @@
-from gedi_streams.features.feature_extraction import FeatureExtraction, compute_features_from_log
+from gedi_streams.features.feature_extraction import FeatureExtraction, compute_features_from_event_data
 from pm4py.objects.log.obj import EventLog, Trace, Event
 from datetime import datetime as dt
 
@@ -13,7 +13,7 @@ def test_FeatureExtraction():
     result = features.feat.round(2).to_dict()
     assert result == VALIDATION_OUTPUT
 
-def test_compute_features_from_log():
+def test_compute_features_from_event_data():
     def prepare_log():
         # Prepare a mock event log for testing
         log = EventLog()
@@ -44,7 +44,7 @@ def test_compute_features_from_log():
     FEATURE_SET =['n_traces','trace_len_min','ratio_most_common_variant', 'n_unique_activities', 'n_unique_start_activities',
                   'n_unique_end_activities', 'eventropy_trace', 'epa_variant_entropy', 'n_events_per_window']
 
-    result = compute_features_from_log(feature_set=FEATURE_SET, log=prepare_log())
+    result = compute_features_from_event_data(feature_set=FEATURE_SET, log=prepare_log())
 
     assert result.keys() == set(FEATURE_SET)
     assert result == {'n_traces': 1, 'trace_len_min': 2, 'ratio_most_common_variant': 1.0, 'n_unique_activities': 2, 'n_unique_start_activities': 1, 'n_unique_end_activities': 1, 'eventropy_trace': -0.0, 'epa_variant_entropy': 0.0, 'n_events_per_window': 2}
