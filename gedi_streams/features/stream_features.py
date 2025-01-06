@@ -21,10 +21,19 @@ def stream_feature_type(feature_name):
     raise ValueError(f"ERROR: Invalid value for feature_key argument: {feature_name}. See README.md for " +
                      f"supported feature_names or use a sublist of the following: {FEATURE_TYPES} or None")
 
-class StreamFeatures(Feature):
+class StreamFeature(Feature):
     def __init__(self, feature_names='stream_features'):
         self.feature_type='stream_features'
-        self.available_class_methods = dict(inspect.getmembers(StreamFeatures, predicate=inspect.ismethod))
+        self.available_class_methods = dict(inspect.getmembers(StreamFeature, predicate=inspect.ismethod))
+        if self.feature_type in feature_names:
+            self.feature_names = [*self.available_class_methods.keys()]
+        else:
+            self.feature_names = feature_names
+
+class SimpleStreamStats(StreamFeature):
+    def __init__(self, feature_names='simple_stream_stats'):
+        self.feature_type='simple_stream_stats'
+        self.available_class_methods = dict(inspect.getmembers(SimpleStreamStats, predicate=inspect.ismethod))
         if self.feature_type in feature_names:
             self.feature_names = [*self.available_class_methods.keys()]
         else:

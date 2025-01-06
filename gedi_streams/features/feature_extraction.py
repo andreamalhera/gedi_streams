@@ -17,7 +17,7 @@ from feeed.start_activities import StartActivities as start_activities
 from feeed.trace_length import TraceLength as trace_length
 from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
-from gedi_streams.features.stream_features import StreamFeatures as stream_features
+from gedi_streams.features.stream_features import SimpleStreamStats as simple_stream_stats
 from gedi_streams.features.stream_features import stream_feature_type
 from gedi_streams.utils.column_mappings import column_mappings
 from gedi_streams.utils.io_helpers import dump_features_json
