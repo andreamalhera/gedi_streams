@@ -24,6 +24,8 @@ from gedi_streams.utils.io_helpers import dump_features_json
 from gedi_streams.utils.param_keys import INPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from pathlib import Path
+from pm4py.objects.log.obj import EventLog
+from typing import List, Union
 
 def get_feature_type(ft_name):
     try:
@@ -34,12 +36,16 @@ def get_feature_type(ft_name):
     return ft_type
 
 
-def compute_features_from_event_data(feature_set, log):
+def compute_features_from_event_data(feature_set, event_data: Union[EventLog, List[EventLog]]):
+    #TODO: Compute features in frame instead of window
+    if isinstance(event_data, list) and all(isinstance(window, EventLog) for window in event_data):
+        event_data = event_data[0]
+
     features_computation = {}
     for ft_name in feature_set:
         ft_type = get_feature_type(ft_name)
         #print(f"INFO: Computing {ft_type} for {ft_name}")
-        features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(log)"))
+        features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(event_data)"))
     return features_computation
 
 def get_sortby_parameter(elem):
