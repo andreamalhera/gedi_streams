@@ -365,7 +365,7 @@ def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='
         feature_set = input_params.get(FEATURE_PARAMS).get(FEATURE_SET)
         # features_per_window = FeatureExtraction(ft_params=input_params).feat
         features_per_window = compute_features_from_log(feature_set, el)
-        features_per_window['size_num'] = str(window_size) + '_' + str(window_num)
+        #features_per_window['size_num'] = str(window_size) + '_' + str(window_num)
 
         all_features.append(features_per_window)
         print(f"   SUCCESS: Window {window_num}/{n_windows} processed successfully.",
