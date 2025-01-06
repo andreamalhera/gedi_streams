@@ -72,12 +72,22 @@ The JSON file consists of the following key-value pairs:
 
 - pipeline_step: denotes the current step in the pipeline (here: feature_extraction)
 - input_path: folder to the input files
-- feature params: defines a dictionary, where the inner dictionary consists of a key-value pair 'feature_set' with a list of features being extracted from the references files. A list of valid features can be looked up from the FEEED extractor
+- feature params: defines a dictionary, where the inner dictionary consists of a key-value pair 'feature_set' with a list of features being extracted from the references files. A list of valid features can be looked up from [FEEED](https://github.com/lmu-dbs/feeed)
 - output_path: defines the path, where plots are saved to
 - real_eventlog_path: defines the file with the features extracted from the real event logs
 - plot_type: defines the style of the output plotting (possible values: violinplot, boxplot)
 - font_size: label font size of the output plot
 - boxplot_width: width of the violinplot/boxplot
+
+### Feature types
+Specific `feature_name`s and `feature_type`s can be selected as in the examples below. Additionally, features from [FEEED](https://github.com/lmu-dbs/feeed) are supported, with Windows as EventLogs:
+| Feature Type     | Feature Names                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+|------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| simple_stats     | n_events, n_traces, n_windows, ratio_events_per_window, ratio_traces_per_window                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| n_trace_per_window_distribution     | n_traces_min, n_traces_max, n_traces_mean, n_traces_median, n_traces_mode, n_traces_std, n_traces_variance, n_traces_q1, n_traces_q3, n_traces_iqr, n_traces_geometric_mean, n_traces_geometric_std, n_traces_harmonic_mean, n_traces_skewness, n_traces_kurtosis, n_traces_coefficient_variation, n_traces_entropy |
+| ...     | ... |
+
+
 
 ### Generation
 ---
