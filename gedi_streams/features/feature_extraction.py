@@ -35,12 +35,6 @@ def get_feature_type(ft_name):
 
 
 def compute_features_from_event_data(feature_set, log):
-    for i, trace in enumerate(log):
-        trace.attributes['concept:name'] = str(i)
-        for j, event in enumerate(trace):
-            event['time:timestamp'] = dt.fromtimestamp(j * 1000)
-            event['lifecycle:transition'] = "complete"
-
     features_computation = {}
     for ft_name in feature_set:
         ft_type = get_feature_type(ft_name)
