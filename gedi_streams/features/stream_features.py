@@ -29,5 +29,25 @@ class StreamFeatures(Feature):
             self.feature_names = feature_names
 
     @classmethod
-    def n_events_per_window(self, window: EventLog):
+    def n_events(self, window: EventLog):
         return sum(len(trace) for trace in window)
+
+    @classmethod
+    def n_traces(self, window: EventLog):
+        return len(window)
+
+    @classmethod
+    def n_windows(self, window: EventLog):
+        return len([window])
+
+    @classmethod
+    def ratio_events_per_window(self, window: EventLog):
+        return sum(len(trace) for trace in window)/len([window])
+
+    @classmethod
+    def ratio_traces_per_window(self, window: EventLog):
+        return len(window)/len([window])
+
+
+
+#TODO stats over multiple windows

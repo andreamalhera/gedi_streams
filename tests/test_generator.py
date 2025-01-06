@@ -20,7 +20,18 @@ def test_abbr_GenerateEventLogs():
 def test_DEFact_wrapper():
     N_WINDOWS = 10
     WINDOW_SIZE = 30
-    INPUT_PARAMS = {'pipeline_step': 'feature_extraction','input_path': 'data/test', 'feature_params': {'feature_set': ['n_traces','ratio_unique_traces_per_trace', 'ratio_most_common_variant', 'ratio_top_10_variants', 'epa_normalized_variant_entropy', 'epa_normalized_sequence_entropy', 'epa_normalized_sequence_entropy_linear_forgetting', 'epa_normalized_sequence_entropy_exponential_forgetting']}, 'output_path': 'output/plots', 'real_eventlog_path': 'data/BaselineED_feat.csv', 'plot_type': 'boxplot', 'font_size': 24, 'boxplot_width': 10}
+    INPUT_PARAMS = {'pipeline_step': 'feature_extraction','input_path': 'data/test',
+                    'feature_params': {'feature_set':
+                                       ['n_traces',
+                                        'ratio_unique_traces_per_trace',
+                                        'ratio_most_common_variant',
+                                        'ratio_top_10_variants',
+                                        'epa_normalized_variant_entropy',
+                                        'epa_normalized_sequence_entropy',
+                                        'epa_normalized_sequence_entropy_linear_forgetting',
+                                        'epa_normalized_sequence_entropy_exponential_forgetting',
+                                        'n_events']},
+                    'output_path': 'output/plots', 'real_eventlog_path': 'data/BaselineED_feat.csv', 'plot_type': 'boxplot', 'font_size': 24, 'boxplot_width': 10}
 
     all_features = DEFact_wrapper(N_WINDOWS, INPUT_PARAMS, WINDOW_SIZE)
     assert len(all_features) == N_WINDOWS

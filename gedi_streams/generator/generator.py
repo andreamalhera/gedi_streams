@@ -360,6 +360,7 @@ def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='
         el = window_to_eventlog(window)
         #print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
 
+        #TODO: Replaece with Optimization step
         input_params['input_path'] = OUTPUT_PATH
         feature_set = input_params.get(FEATURE_PARAMS).get(FEATURE_SET)
         # features_per_window = FeatureExtraction(ft_params=input_params).feat
