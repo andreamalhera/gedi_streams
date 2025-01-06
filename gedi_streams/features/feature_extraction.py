@@ -45,7 +45,10 @@ def compute_features_from_event_data(feature_set, event_data: Union[EventLog, Li
     for ft_name in feature_set:
         ft_type = get_feature_type(ft_name)
         #print(f"INFO: Computing {ft_type} for {ft_name}")
-        features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(event_data)"))
+        if ft_type == ft_name:
+            features_computation.update(eval(f"{ft_type}().extract(event_data)"))
+        else:
+            features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(event_data)"))
     return features_computation
 
 def get_sortby_parameter(elem):
