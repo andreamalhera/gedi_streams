@@ -1,5 +1,6 @@
 import inspect
 import numpy as np
+import re
 
 from gedi_streams.features.feature import Feature
 from gedi_streams.utils.io_helpers import list_classes_in_file
@@ -14,6 +15,7 @@ def stream_feature_type(feature_name):
     for feature_type in FEATURE_TYPES:
         available_features.extend([*eval(feature_type)().available_class_methods])
         available_features.append(str(feature_type))
+        available_features.append(re.sub(r'([a-z])([A-Z])', r'\1_\2', str(feature_type)).lower())
         if feature_name in available_features:
             return feature_type
     raise ValueError(f"ERROR: Invalid value for feature_key argument: {feature_name}. See README.md for " +

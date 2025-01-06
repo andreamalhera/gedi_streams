@@ -59,6 +59,6 @@ def test_compute_features_from_event_data_frame():
             frame.append(prepare_log())
         return frame
 
-    FEATURE_SET = ['simple_stats'] #,'stream_features']
+    FEATURE_SET = ['stream_features']
     result = compute_features_from_event_data(feature_set=FEATURE_SET, event_data=prepare_frame())
-    assert len(result) == 3
+    assert len(result) == 5
