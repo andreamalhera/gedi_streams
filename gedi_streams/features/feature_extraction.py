@@ -39,7 +39,9 @@ def get_feature_type(ft_name):
 def compute_features_from_event_data(feature_set, event_data: Union[EventLog, List[EventLog]]):
     #TODO: Compute features in frame instead of window
     if isinstance(event_data, list) and all(isinstance(window, EventLog) for window in event_data):
-        event_data = event_data[0]
+        for window in event_data:
+            return compute_features_from_event_data(feature_set, window)
+        return
 
     features_computation = {}
     for ft_name in feature_set:
