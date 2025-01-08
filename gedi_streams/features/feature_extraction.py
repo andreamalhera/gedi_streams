@@ -18,15 +18,31 @@ from feeed.trace_length import TraceLength as trace_length
 from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
 from gedi_streams.features.memory import ComputedFeatureMemory
-from gedi_streams.features.stream_features import SimpleStreamStats as simple_stream_stats
-from gedi_streams.features.stream_features import stream_feature_type
+from gedi_streams.features.simple_stream_stats import SimpleStreamStats as simple_stream_stats
 from gedi_streams.utils.column_mappings import column_mappings
 from gedi_streams.utils.io_helpers import dump_features_json
+from gedi_streams.utils.io_helpers import list_classes_in_file
 from gedi_streams.utils.param_keys import INPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from pathlib import Path
 from pm4py.objects.log.obj import EventLog
 from typing import List, Union
+
+def stream_feature_type(feature_name):
+    classes_files = [os.path.join(os.path.dirname(__file__),feature_file) for feature_file in os.listdir(os.path.dirname(__file__)) if feature_file.endswith('.py')]
+    FEATURE_TYPES = [list_classes_in_file(feature_file) for feature_file in classes_files]
+    FEATURE_TYPES = [item for sublist in FEATURE_TYPES for item in sublist]
+    print("FEATURE_TYPES in ",__file__, FEATURE_TYPES)
+    available_features = []
+    for feature_type in FEATURE_TYPES:
+        feature_type = re.sub(r'([a-z])([A-Z])', r'\1_\2', str(feature_type)).lower()
+        available_features.extend([*eval(feature_type)().available_class_methods])
+        available_features.append(str(feature_type))
+        available_features.append(re.sub(r'([a-z])([A-Z])', r'\1_\2', str(feature_type)).lower())
+        if feature_name in available_features:
+            return feature_type
+    raise ValueError(f"ERROR: Invalid value for feature_key argument: {feature_name}. See README.md for " +
+                     f"supported feature_names or use a sublist of the following: {FEATURE_TYPES} or None")
 
 def get_feature_type(ft_name):
     try:
