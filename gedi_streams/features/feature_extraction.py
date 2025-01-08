@@ -41,18 +41,21 @@ def compute_features_from_event_data(feature_set, event_data: Union[EventLog, Li
     feature_memory = ComputedFeatureMemory()
     #TODO: Compute features in frame instead of window
     if isinstance(event_data, list) and all(isinstance(window, EventLog) for window in event_data):
-        event_data = event_data[0]
+        for window in event_data:
+            compute_features_from_event_data(feature_set, window)
 
     features_computation = {}
     for ft_name in feature_set:
         ft_type = get_feature_type(ft_name)
         #print(f"INFO: Computing {ft_type}: {ft_name}")
         computation_command = f"{ft_type}("
-        if 'stream' in ft_type:
-            computation_command +='memory=feature_memory,'
         if ft_type != ft_name:
             computation_command += f"feature_names=['{ft_name}'],"
-        computation_command += f").extract(event_data)"
+        computation_command += f").extract(event_data"
+        if 'stream' in ft_type:
+            computation_command +=', memory=feature_memory)'
+        else:
+            computation_command +=')'
         features_computation.update(eval(computation_command))
 
     feature_memory.set_multiple_features(features_computation)

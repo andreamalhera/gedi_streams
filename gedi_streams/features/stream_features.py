@@ -23,7 +23,7 @@ def stream_feature_type(feature_name):
                      f"supported feature_names or use a sublist of the following: {FEATURE_TYPES} or None")
 
 class StreamFeature(Feature):
-    def __init__(self, memory: ComputedFeatureMemory, feature_names='stream_features'):
+    def __init__(self, feature_names='stream_features'):
         self.feature_type='stream_features'
         self.available_class_methods = dict(inspect.getmembers(StreamFeature, predicate=inspect.ismethod))
         if self.feature_type in feature_names:
@@ -42,23 +42,25 @@ class SimpleStreamStats(StreamFeature):
 
     #NEXTTODO: Add memory into computation through feature.py", line 12, in extract: feature_value = feature_fn(log)
     @classmethod
-    def n_events(self, window: EventLog):#, memory: ComputedFeatureMemory):
-        return sum(len(trace) for trace in window)#+memory.get_feature('n_events')
+    def n_events(self, window: EventLog,  memory: ComputedFeatureMemory):
+        previous_value = memory.get_feature_value('n_events')
+        n_events = sum(len(trace) for trace in window)
+        return n_events + previous_value if previous_value is not None else n_events
 
     @classmethod
-    def n_traces(self, window: EventLog):
+    def n_traces(self, window: EventLog, memory: ComputedFeatureMemory):
         return len(window)
 
     @classmethod
-    def n_windows(self, window: EventLog):
+    def n_windows(self, window: EventLog, memory: ComputedFeatureMemory):
         return len([window])
 
     @classmethod
-    def ratio_events_per_window(self, window: EventLog):
+    def ratio_events_per_window(self, window: EventLog, memory: ComputedFeatureMemory):
         return sum(len(trace) for trace in window)/len([window])
 
     @classmethod
-    def ratio_traces_per_window(self, window: EventLog):
+    def ratio_traces_per_window(self, window: EventLog, memory: ComputedFeatureMemory):
         return len(window)/len([window])
 
 
