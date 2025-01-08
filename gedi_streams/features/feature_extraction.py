@@ -55,8 +55,8 @@ def get_feature_type(ft_name):
 
 def compute_features_from_event_data(feature_set, event_data: Union[EventLog, List[EventLog]]):
     feature_memory = ComputedFeatureMemory()
-    #TODO: Compute features in frame instead of window
     if isinstance(event_data, list) and all(isinstance(window, EventLog) for window in event_data):
+        feature_memory.clear_memory()
         for window in event_data:
             compute_features_from_event_data(feature_set, window)
 

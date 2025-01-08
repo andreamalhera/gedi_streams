@@ -60,5 +60,9 @@ def test_compute_features_from_event_data_frame():
         return frame
 
     FEATURE_SET = ['simple_stream_stats']
+    EXPECTED_FEATURES = {'n_events': 15, 'n_traces': 10, 'n_windows': 6, 'ratio_events_per_window': 2.5, 'ratio_traces_per_window': 1.6666666666666667}
+
     result = compute_features_from_event_data(feature_set=FEATURE_SET, event_data=prepare_frame())
     assert len(result) == 5
+    assert result.keys() == set(EXPECTED_FEATURES.keys())
+    assert result== EXPECTED_FEATURES
