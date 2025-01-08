@@ -22,64 +22,43 @@ def stream_feature_type(feature_name):
                      f"supported feature_names or use a sublist of the following: {FEATURE_TYPES} or None")
 
 class StreamFeature(Feature):
-    # Class-level memory to store feature values
-    feature_memory = {}
-
-    @classmethod
-    def store_feature_value(cls, key, value):
-        """Stores a value in feature_memory (class-level)"""
-        cls.feature_memory[key] = value
-
-    @classmethod
-    def get_feature_value(cls, key):
-        """Retrieves a value from feature_memory (class-level)"""
-        return cls.feature_memory.get(key, None)  # Default to None if not found
-
+    def __init__(self, feature_names='stream_features'):
+        self.feature_type='stream_features'
+        self.available_class_methods = dict(inspect.getmembers(StreamFeature, predicate=inspect.ismethod))
+        if self.feature_type in feature_names:
+            self.feature_names = [*self.available_class_methods.keys()]
+        else:
+            self.feature_names = feature_names
 
 class SimpleStreamStats(StreamFeature):
     def __init__(self, feature_names='simple_stream_stats'):
-        super().__init__(feature_names=feature_names)
-        self.feature_type = 'simple_stream_stats'
-        self.available_class_methods = {
-                name: method for name, method in inspect.getmembers(SimpleStreamStats, predicate=inspect.ismethod)
-                if name not in ['get_feature_value', 'store_feature_value']
-                }
-        #self.available_class_methods = dict(inspect.getmembers(SimpleStreamStats,
-        #                                                       predicate=inspect.ismethod))
+        self.feature_type='simple_stream_stats'
+        self.available_class_methods = dict(inspect.getmembers(SimpleStreamStats, predicate=inspect.ismethod))
         if self.feature_type in feature_names:
             self.feature_names = [*self.available_class_methods.keys()]
         else:
             self.feature_names = feature_names
 
     @classmethod
-    def n_events(cls, window: 'EventLog'):
-        """Calculate the number of events in the given window and store it"""
-        result = sum(len(trace) for trace in window)  # Count events in all traces
-
-        # If there is already a stored value for n_events, aggregate it with the current result
-        if 'n_events' in cls.feature_memory:
-            result += cls.feature_memory['n_events']
-
-        # Store the result in the class-level memory (feature_memory)
-        cls.store_feature_value('n_events', result)
-
-        return result
+    def n_events(self, window: EventLog):
+        return sum(len(trace) for trace in window)
 
     @classmethod
-    def n_traces(cls, window: EventLog):
+    def n_traces(self, window: EventLog):
         return len(window)
 
     @classmethod
-    def n_windows(cls, window: EventLog):
+    def n_windows(self, window: EventLog):
         return len([window])
 
     @classmethod
-    def ratio_events_per_window(cls, window: EventLog):
+    def ratio_events_per_window(self, window: EventLog):
         return sum(len(trace) for trace in window)/len([window])
 
     @classmethod
-    def ratio_traces_per_window(cls, window: EventLog):
+    def ratio_traces_per_window(self, window: EventLog):
         return len(window)/len([window])
+
 
 
 #TODO stats over multiple windows
