@@ -17,6 +17,7 @@ from feeed.start_activities import StartActivities as start_activities
 from feeed.trace_length import TraceLength as trace_length
 from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
+from gedi_streams.features.memory import ComputedFeatureMemory
 from gedi_streams.features.stream_features import SimpleStreamStats as simple_stream_stats
 from gedi_streams.features.stream_features import stream_feature_type
 from gedi_streams.utils.column_mappings import column_mappings
@@ -37,6 +38,7 @@ def get_feature_type(ft_name):
 
 
 def compute_features_from_event_data(feature_set, event_data: Union[EventLog, List[EventLog]]):
+    feature_memory = ComputedFeatureMemory()
     #TODO: Compute features in frame instead of window
     if isinstance(event_data, list) and all(isinstance(window, EventLog) for window in event_data):
         event_data = event_data[0]
@@ -44,11 +46,16 @@ def compute_features_from_event_data(feature_set, event_data: Union[EventLog, Li
     features_computation = {}
     for ft_name in feature_set:
         ft_type = get_feature_type(ft_name)
-        #print(f"INFO: Computing {ft_type} for {ft_name}")
-        if ft_type == ft_name:
-            features_computation.update(eval(f"{ft_type}().extract(event_data)"))
-        else:
-            features_computation.update(eval(f"{ft_type}(feature_names=['{ft_name}']).extract(event_data)"))
+        #print(f"INFO: Computing {ft_type}: {ft_name}")
+        computation_command = f"{ft_type}("
+        if 'stream' in ft_type:
+            computation_command +='memory=feature_memory,'
+        if ft_type != ft_name:
+            computation_command += f"feature_names=['{ft_name}'],"
+        computation_command += f").extract(event_data)"
+        features_computation.update(eval(computation_command))
+
+    feature_memory.set_multiple_features(features_computation)
     return features_computation
 
 def get_sortby_parameter(elem):

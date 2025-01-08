@@ -3,6 +3,7 @@ import numpy as np
 import re
 
 from gedi_streams.features.feature import Feature
+from gedi_streams.features.memory import ComputedFeatureMemory
 from gedi_streams.utils.io_helpers import list_classes_in_file
 from pm4py.objects.log.obj import EventLog
 from scipy import stats
@@ -22,7 +23,7 @@ def stream_feature_type(feature_name):
                      f"supported feature_names or use a sublist of the following: {FEATURE_TYPES} or None")
 
 class StreamFeature(Feature):
-    def __init__(self, feature_names='stream_features'):
+    def __init__(self, memory: ComputedFeatureMemory, feature_names='stream_features'):
         self.feature_type='stream_features'
         self.available_class_methods = dict(inspect.getmembers(StreamFeature, predicate=inspect.ismethod))
         if self.feature_type in feature_names:
@@ -31,7 +32,7 @@ class StreamFeature(Feature):
             self.feature_names = feature_names
 
 class SimpleStreamStats(StreamFeature):
-    def __init__(self, feature_names='simple_stream_stats'):
+    def __init__(self, feature_names='simple_stream_stats', memory=None):
         self.feature_type='simple_stream_stats'
         self.available_class_methods = dict(inspect.getmembers(SimpleStreamStats, predicate=inspect.ismethod))
         if self.feature_type in feature_names:
@@ -39,9 +40,10 @@ class SimpleStreamStats(StreamFeature):
         else:
             self.feature_names = feature_names
 
+    #NEXTTODO: Add memory into computation through feature.py", line 12, in extract: feature_value = feature_fn(log)
     @classmethod
-    def n_events(self, window: EventLog):
-        return sum(len(trace) for trace in window)
+    def n_events(self, window: EventLog):#, memory: ComputedFeatureMemory):
+        return sum(len(trace) for trace in window)#+memory.get_feature('n_events')
 
     @classmethod
     def n_traces(self, window: EventLog):
