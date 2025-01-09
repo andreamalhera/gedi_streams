@@ -135,7 +135,6 @@ class FeatureExtraction(EventDataFile):
                     self._aggregate_features()
                 elif self.filename[0].endswith(".xes"): # Computes features for list of .xes files
                     self.filename = [ filename for filename in self.filename if filename.endswith(".xes")]
-                #TODO: Implement if self.filename[0].endswith(".<window format>") for Event Streams
                 else:
                     pass
 

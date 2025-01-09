@@ -75,12 +75,15 @@ def test_compute_features_from_event_data_frame():
         return frame
 
     N_WINDOWS = 5
-    FEATURE_SET = ['simple_stream_stats', 'n_traces_pw_min']
+    FEATURE_SET = ['simple_stream_stats', 'n_traces_pw_min',
+                   'n_traces_pw_max', 'n_traces_pw_mean']#,
+                   #'n_traces_pw_std']
     EXPECTED_FEATURES = {'n_events': 10, 'n_traces': 5,
                          'n_windows': N_WINDOWS, 'ratio_events_per_window': 2.0,
-                         'ratio_traces_per_window': 1.0, 'n_traces_pw_min': 1.0}
+                         'ratio_traces_per_window': 1.0, 'n_traces_pw_min': 1.0,
+                         'n_traces_pw_max': 1.0, 'n_traces_pw_mean': 1.0,}
 
     result = compute_features_from_event_data(feature_set=FEATURE_SET, event_data=prepare_frame(N_WINDOWS))
-    assert len(result) == 6
+    assert len(result) == 8
     assert result.keys() == set(EXPECTED_FEATURES.keys())
     assert result== EXPECTED_FEATURES
