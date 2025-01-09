@@ -19,6 +19,7 @@ from feeed.trace_variant import TraceVariant as trace_variant
 from functools import partial
 from gedi_streams.features.memory import ComputedFeatureMemory
 from gedi_streams.features.simple_stream_stats import SimpleStreamStats as simple_stream_stats
+from gedi_streams.features.n_traces import NTracesPerWindow as n_traces_per_window
 from gedi_streams.utils.column_mappings import column_mappings
 from gedi_streams.utils.io_helpers import dump_features_json
 from gedi_streams.utils.io_helpers import list_classes_in_file
@@ -28,17 +29,34 @@ from pathlib import Path
 from pm4py.objects.log.obj import EventLog
 from typing import List, Union
 
+def _is_feature_class(name: str) -> bool:
+    try:
+        if re.match(r'^[A-Z][a-z]*([A-Z][a-z]*)*$', name):
+            #print("PASCAL CASE", name)
+            snake_case_name = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
+            return hasattr(eval(snake_case_name+"()"), 'available_class_methods')
+        elif re.match(r'^[a-z]+(_[a-z]+)*$', name):
+            #print("SNAKE CASE", name)
+            return hasattr(eval(name+"()"), 'available_class_methods')
+        else:
+            return False
+    except NameError:
+        return False
+
 def stream_feature_type(feature_name):
     classes_files = [os.path.join(os.path.dirname(__file__),feature_file) for feature_file in os.listdir(os.path.dirname(__file__)) if feature_file.endswith('.py')]
     FEATURE_TYPES = [list_classes_in_file(feature_file) for feature_file in classes_files]
     FEATURE_TYPES = [item for sublist in FEATURE_TYPES for item in sublist]
-    print("FEATURE_TYPES in ",__file__, FEATURE_TYPES)
+    FEATURE_TYPES = [cls for cls in FEATURE_TYPES if _is_feature_class(cls)]
     available_features = []
     for feature_type in FEATURE_TYPES:
-        feature_type = re.sub(r'([a-z])([A-Z])', r'\1_\2', str(feature_type)).lower()
-        available_features.extend([*eval(feature_type)().available_class_methods])
-        available_features.append(str(feature_type))
-        available_features.append(re.sub(r'([a-z])([A-Z])', r'\1_\2', str(feature_type)).lower())
+        feature_type =  re.sub(r'(?<!^)(?=[A-Z])', '_', feature_type).lower()
+        try:
+            available_features.extend([*eval(feature_type)().available_class_methods])
+            available_features.append(str(feature_type))
+            available_features.append(re.sub(r'([a-z])([A-Z])', r'\1_\2', str(feature_type)).lower())
+        except NameError:
+            continue
         if feature_name in available_features:
             return feature_type
     raise ValueError(f"ERROR: Invalid value for feature_key argument: {feature_name}. See README.md for " +
@@ -48,8 +66,8 @@ def get_feature_type(ft_name):
     try:
         ft_type = feature_type(ft_name)
     except ValueError:
-        ft_type = re.sub(r'([a-z])([A-Z])', r'\1_\2', stream_feature_type(ft_name)).lower()
-        #"stream_features"
+        #Stream features
+        ft_type = re.sub(r'(?<!^)(?=[A-Z])', '_', stream_feature_type(ft_name)).lower()
     return ft_type
 
 
@@ -59,18 +77,22 @@ def compute_features_from_event_data(feature_set, event_data: Union[EventLog, Li
         feature_memory.clear_memory()
         for window in event_data:
             compute_features_from_event_data(feature_set, window)
+        return feature_memory.get_all_features()
 
     features_computation = {}
     for ft_name in feature_set:
+        #print("FEATURE_SET", feature_set)
         ft_type = get_feature_type(ft_name)
         #print(f"INFO: Computing {ft_type}: {ft_name}")
         computation_command = f"{ft_type}("
         if ft_type != ft_name:
             computation_command += f"feature_names=['{ft_name}'],"
         computation_command += f").extract(event_data"
-        if 'stream' in ft_type:
+        try:
+            ft_type = stream_feature_type(ft_name)
+            computation_command = re.sub(r'^\w+(?=\()', ft_type, computation_command)
             computation_command +=', memory=feature_memory)'
-        else:
+        except (NameError, ValueError):
             computation_command +=')'
         features_computation.update(eval(computation_command))
 

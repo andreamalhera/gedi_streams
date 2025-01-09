@@ -30,8 +30,9 @@ class SimpleStreamStats(StreamFeature):
     @classmethod
     def n_windows(self, window: EventLog, memory: ComputedFeatureMemory):
         previous_value = memory.get_feature_value('n_windows')
-        n_windows = len([window])
-        return len([window]) + previous_value if previous_value is not None else len([window])
+        return 1+previous_value if previous_value is not None else 1
+        n_windows = 1
+        return n_windows + previous_value if previous_value is not None else n_windows
 
     @classmethod
     def ratio_events_per_window(self, window: EventLog, memory: ComputedFeatureMemory):
@@ -39,7 +40,7 @@ class SimpleStreamStats(StreamFeature):
         previous_n_windows = memory.get_feature_value('n_windows')
 
         new_n_events = sum(len(trace) for trace in window) + previous_n_events if previous_n_events is not None else sum(len(trace) for trace in window)
-        new_n_windows = len([window]) + previous_n_windows if previous_n_windows is not None else len([window])
+        new_n_windows = 1 + previous_n_windows if previous_n_windows is not None else 1
 
         return new_n_events / new_n_windows
 
@@ -49,6 +50,6 @@ class SimpleStreamStats(StreamFeature):
         previous_n_windows = memory.get_feature_value('n_windows')
 
         new_n_traces = len(window) + previous_n_traces if previous_n_traces is not None else len(window)
-        new_n_windows = len([window]) + previous_n_windows if previous_n_windows is not None else len([window])
+        new_n_windows = 1 + previous_n_windows if previous_n_windows is not None else 1
 
         return new_n_traces / new_n_windows
