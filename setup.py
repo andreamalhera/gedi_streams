@@ -32,6 +32,7 @@ setup(
             'matplotlib~=3.9.2',
             'pm4py~=2.7.2',
             'imbalanced-learn~=0.12.4',
+            'pytest~=8.3.4',
             ],
         packages = ['gedi_streams'],
         classifiers=[
