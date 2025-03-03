@@ -85,8 +85,14 @@ Specific `feature_name`s and `feature_type`s can be selected as in the examples 
 |------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | simple_stats     | n_events, n_traces, n_windows, ratio_events_per_window, ratio_traces_per_window                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | n_trace_per_window_distribution     | n_traces_min, n_traces_max, n_traces_mean, n_traces_median, n_traces_mode, n_traces_std, n_traces_variance, n_traces_q1, n_traces_q3, n_traces_iqr, n_traces_geometric_mean, n_traces_geometric_std, n_traces_harmonic_mean, n_traces_skewness, n_traces_kurtosis, n_traces_coefficient_variation, n_traces_entropy |
+| activity_stability     | jaccard_index_activity_distributions,  |
+| variant_stability     | jaccard_index_variant_distributions: Mengen der gemeinsamen variants  |
+| parallel_activities_ratio     | and_measure, etc. (log skeleton) |
+| epa_based_entropies     | and_measure, etc. (log skeleton) |
+| eventropies | eventropies aus GEDI|
+| duration_stability | activity_duration_stability, variant_duration_stability (Annahme: Endzeitstempel von A ist der Startzeitstempel von A, mean absolute deviation) |
+| long_term_dependencies | frame_dependency (Differenz menge of purely evententually follows relations, threshold: anzahl von events) |
 | ...     | ... |
-
 
 
 ### Generation
