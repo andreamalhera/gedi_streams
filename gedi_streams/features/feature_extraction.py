@@ -122,7 +122,7 @@ class FeatureExtraction(EventDataFile):
         self._parse_params(ft_params)
 
         try:
-            start = dt.now()
+            self.start = dt.now()
             print("=========================== FeatureExtraction Computation===========================")
             print(f"INFO: Running with {ft_params}")
             if str(self.filename).endswith('csv'): # Returns dataframe from loaded features file
@@ -145,7 +145,7 @@ class FeatureExtraction(EventDataFile):
                     with multiprocessing.Pool(num_cores) as p:
                         try:
                             print(
-                                f"INFO: FeatureExtraction starting at {start.strftime('%H:%M:%S')} using {num_cores} cores for {len(self.filename)} files, namely {self.filename}...")
+                                f"INFO: FeatureExtraction starting at {self.start.strftime('%H:%M:%S')} using {num_cores} cores for {len(self.filename)} files, namely {self.filename}...")
                             result = p.map(partial(self.extract_features_wrapper, feature_set = self.params[FEATURE_SET])
                                        , self.filename)
                             result = [i for i in result if i is not None]
@@ -187,7 +187,7 @@ class FeatureExtraction(EventDataFile):
             print(err)
             print(f"ERROR: Cannot load {self.filepath}. Double check for file or change config 'load_results' to false")
         else:
-            print(f"SUCCESS: FeatureExtraction took {dt.now()-start} sec. Saved {len(self.feat.columns)-1} features for {len(self.feat)} in {self.filepath}")
+            print(f"SUCCESS: FeatureExtraction took {dt.now()-self.start} sec. Saved {len(self.feat.columns)-1} features for {len(self.feat)} in {self.filepath}")
             print("=========================== ~ FeatureExtraction Computation=========================")
 
     def _parse_params(self, params):
@@ -238,7 +238,7 @@ class FeatureExtraction(EventDataFile):
         self.filename = os.path.split(self.root_path)[-1] + '_feat.csv'
         self.root_path=Path(os.path.split(self.root_path)[0])
         combined_features.to_csv(self.filepath, index=False)
-        print(f"SUCCESS: FeatureExtraction took {dt.now()-start} sec. Saved {len(self.feat.columns)} features for {len(self.feat)} in {self.filepath}")
+        print(f"SUCCESS: FeatureExtraction took {dt.now()-self.start} sec. Saved {len(self.feat.columns)} features for {len(self.feat)} in {self.filepath}")
         print("=========================== ~ FeatureExtraction Computation=========================")
         return
 
