@@ -8,6 +8,7 @@ from scipy import stats
 
 class SimpleStreamStats(StreamFeature):
     def __init__(self, feature_names='simple_stream_stats', memory=None):
+        super().__init__(feature_names)
         self.feature_type='simple_stream_stats'
         self.available_class_methods = dict(inspect.getmembers(SimpleStreamStats, predicate=inspect.ismethod))
         if self.feature_type in feature_names:
