@@ -1,5 +1,7 @@
 import multiprocessing
 import os
+from typing import Dict
+
 import pandas as pd
 import random
 import re
@@ -210,7 +212,7 @@ class GenerateEventLogs():
 
         if self.n_trials is None:
             self.n_trials = 20
-            print(f"INFO: Running with n_trials={n_trials}")
+            print(f"INFO: Running with n_trials={self.n_trials}")
         else:
             self.n_trials = self.n_trials
         return
@@ -342,10 +344,15 @@ class GenerateEventLogs():
                raise NotImplementedError(f"Play out method {self.generator.simulation_method} not implemented.")
             return log
 
-def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='FeatureExtraction'):
+def DEFact_wrapper(
+        n_windows: int,
+        input_params: dict[str, str | int | dict[str, list[str]]],
+        window_size: int = 20,
+        print_events: bool=True
+):
     output_queue = Queue()
 
-    p1 = Process(target=play_DEFact, kwargs={'queue': output_queue})
+    p1 = Process(target=play_DEFact, kwargs={'queue': output_queue, 'print_events': print_events})
     p1.start()
 
     window = []
@@ -358,16 +365,14 @@ def DEFact_wrapper(n_windows, input_params, window_size=20, secondary_function='
             window.append(output_queue.get())
 
         el = window_to_eventlog(window)
-        #print(f"   SUCCESS: Generated eventlog from stream {len(window)}", el)
 
-        #TODO: Replaece with Optimization step
         input_params['input_path'] = OUTPUT_PATH
         feature_set = input_params.get(FEATURE_PARAMS).get(FEATURE_SET)
-        # features_per_window = FeatureExtraction(ft_params=input_params).feat
-        features_per_window = compute_features_from_event_data(feature_set, el)
-        #features_per_window['size_num'] = str(window_size) + '_' + str(window_num)
+
+        features_per_window: Dict[str, float | int] = compute_features_from_event_data(feature_set, el)
 
         all_features.append(features_per_window)
+
         print(f"   SUCCESS: Window {window_num}/{n_windows} processed successfully.",
               f"Extracted {len(features_per_window)} features from stream window")
 
