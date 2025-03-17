@@ -20,6 +20,7 @@ from functools import partial
 from gedi_streams.features.memory import ComputedFeatureMemory
 from gedi_streams.features.simple_stream_stats import SimpleStreamStats as simple_stream_stats
 from gedi_streams.features.n_traces import NTracesPerWindow as n_traces_per_window
+from gedi_streams.features.stream_feature import StreamFeature
 from gedi_streams.utils.column_mappings import column_mappings
 from gedi_streams.utils.io_helpers import dump_features_json
 from gedi_streams.utils.io_helpers import list_classes_in_file
@@ -27,7 +28,22 @@ from gedi_streams.utils.param_keys import INPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from pathlib import Path
 from pm4py.objects.log.obj import EventLog
-from typing import List, Union
+from typing import List, Union, Type, Any, Set
+
+
+def inheritors(klass: Type[StreamFeature]) -> Set[Type[StreamFeature]]:
+    """
+    Possible rework of the class collection code
+    """
+    subclasses: Set[Type[StreamFeature]] = set()
+    work: List[Type[StreamFeature]] = [klass]
+    while work:
+        parent = work.pop()
+        for child in parent.__subclasses__():
+            if child not in subclasses:
+                subclasses.add(child)
+                work.append(child)
+    return subclasses
 
 def _is_feature_class(name: str) -> bool:
     try:
@@ -43,7 +59,9 @@ def _is_feature_class(name: str) -> bool:
     except NameError:
         return False
 
-def stream_feature_type(feature_name):
+def stream_feature_type(feature_name: str) -> str:
+    # classes = inheritors(StreamFeature)
+    # TODO: WTF is this?
     classes_files = [os.path.join(os.path.dirname(__file__),feature_file) for feature_file in os.listdir(os.path.dirname(__file__)) if feature_file.endswith('.py')]
     FEATURE_TYPES = [list_classes_in_file(feature_file) for feature_file in classes_files]
     FEATURE_TYPES = [item for sublist in FEATURE_TYPES for item in sublist]
@@ -62,16 +80,12 @@ def stream_feature_type(feature_name):
     raise ValueError(f"ERROR: Invalid value for feature_key argument: {feature_name}. See README.md for " +
                      f"supported feature_names or use a sublist of the following: {FEATURE_TYPES} or None")
 
-def get_feature_type(ft_name):
-    try:
-        ft_type = feature_type(ft_name)
-    except ValueError:
-        #Stream features
-        ft_type = re.sub(r'(?<!^)(?=[A-Z])', '_', stream_feature_type(ft_name)).lower()
+def get_feature_type(ft_name: str) -> str:
+    ft_type = re.sub(r'(?<!^)(?=[A-Z])', '_', stream_feature_type(ft_name)).lower()
     return ft_type
 
 
-def compute_features_from_event_data(feature_set, event_data: Union[EventLog, List[EventLog]]):
+def compute_features_from_event_data(feature_set: List[str], event_data: Union[EventLog, List[EventLog]]):
     feature_memory = ComputedFeatureMemory()
     if isinstance(event_data, list) and all(isinstance(window, EventLog) for window in event_data):
         feature_memory.clear_memory()
@@ -83,7 +97,7 @@ def compute_features_from_event_data(feature_set, event_data: Union[EventLog, Li
     for ft_name in feature_set:
         #print("FEATURE_SET", feature_set)
         ft_type = get_feature_type(ft_name)
-        #print(f"INFO: Computing {ft_type}: {ft_name}")
+        # print(f"INFO: Computing {ft_type}: {ft_name}")
         computation_command = f"{ft_type}("
         if ft_type != ft_name:
             computation_command += f"feature_names=['{ft_name}'],"

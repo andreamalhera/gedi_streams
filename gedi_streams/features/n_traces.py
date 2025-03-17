@@ -5,6 +5,7 @@ from pm4py.objects.log.obj import EventLog
 
 class NTracesPerWindow(StreamFeature):
     def __init__(self, feature_names='n_traces_per_window', memory=None):
+        super().__init__(feature_names)
         self.feature_type='n_traces_per_window'
         self.available_class_methods = dict(inspect.getmembers(NTracesPerWindow,
                                                                predicate=inspect.ismethod))

@@ -38,13 +38,14 @@ if __name__=='__main__':
         'pipeline_step': 'feature_extraction',
         'input_path': 'data/test',
         'feature_params': {'feature_set': [
-            'n_traces',
-            'ratio_unique_traces_per_trace',
-            'ratio_most_common_variant',
-            'epa_normalized_variant_entropy',
-            'epa_normalized_sequence_entropy_exponential_forgetting',
             'n_events',
-            'n_windows'
+            'n_traces',
+            'n_windows',
+            'ratio_events_per_window',
+            'ratio_traces_per_window',
+            'n_traces_pw_min',
+            'n_traces_pw_max',
+            'n_traces_pw_mean',
             ]
         },
         'output_path': 'output/plots',

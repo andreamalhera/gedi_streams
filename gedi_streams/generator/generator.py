@@ -1,6 +1,8 @@
+import copy
 import multiprocessing
 import os
-from typing import Dict
+from typing import Dict, List
+from xml.sax.handler import all_features
 
 import pandas as pd
 import random
@@ -11,8 +13,11 @@ from ConfigSpace import Configuration, ConfigurationSpace
 from datetime import datetime as dt
 from functools import partial
 from pm4py import write_xes
+from pm4py.objects.log.obj import EventLog
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
+
+from config import DEFAULT_CONFIG_SPACE
 from gedi_streams.features.feature_extraction import FeatureExtraction, compute_features_from_event_data
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
 from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, SIMULATION_METHOD
@@ -36,16 +41,16 @@ def get_tasks(experiment, output_path="", reference_feature=None):
         output_path=os.path.join(output_path,os.path.split(experiment)[-1].split(".")[0])
         if 'task' in tasks.columns:
             tasks.rename(columns={"task":"log"}, inplace=True)
-    elif isinstance(experiment, str) and os.path.isdir(os.path.join(os.getcwd(), experiment)):
-        tasks = read_csvs(experiment, reference_feature)
-    #Read tasks from a real log features selection.
-    elif isinstance(experiment, dict) and INPUT_PATH in experiment.keys():
-        output_path=os.path.join(output_path,os.path.split(experiment.get(INPUT_PATH))[-1].split(".")[0])
-        tasks = pd.read_csv(experiment.get(INPUT_PATH), index_col=None)
-        id_col = tasks.select_dtypes(include=['object']).dropna(axis=1).columns[0]
-        if "objectives" in experiment.keys():
-            incl_cols = experiment["objectives"]
-            tasks = tasks[(incl_cols +  [id_col])]
+    # elif isinstance(experiment, str) and os.path.isdir(os.path.join(os.getcwd(), experiment)):
+    #     tasks = read_csvs(experiment, reference_feature)
+    # #Read tasks from a real log features selection.
+    # elif isinstance(experiment, dict) and INPUT_PATH in experiment.keys():
+    #     output_path=os.path.join(output_path,os.path.split(experiment.get(INPUT_PATH))[-1].split(".")[0])
+    #     tasks = pd.read_csv(experiment.get(INPUT_PATH), index_col=None)
+    #     id_col = tasks.select_dtypes(include=['object']).dropna(axis=1).columns[0]
+    #     if "objectives" in experiment.keys():
+    #         incl_cols = experiment["objectives"]
+    #         tasks = tasks[(incl_cols +  [id_col])]
     # TODO: Solve/Catch error for different objective keys.
     #Read tasks from config_file with list of targets
     elif isinstance(experiment, list):
@@ -115,7 +120,7 @@ def add_extension_before_traces(xes_file):
     with open(xes_file, "w") as f:
         f.write(xml_str)
 
-class GenerateEventLogs():
+class GenerateEventLogs:
     # TODO: Clarify nomenclature: experiment, task, objective as in notebook (https://github.com/lmu-dbs/gedi/blob/main/notebooks/grid_objectives.ipynb)
     def __init__(self, params):
         print("=========================== Generator ==========================")
@@ -132,14 +137,22 @@ class GenerateEventLogs():
 
         if self.tasks is not None:
             self.feature_keys = sorted([feature for feature in self.tasks.columns.tolist() if feature != "log"])
-            num_cores = multiprocessing.cpu_count() if len(self.tasks) >= multiprocessing.cpu_count() else len(self.tasks)
+            # num_cores = multiprocessing.cpu_count() if len(self.tasks) >= multiprocessing.cpu_count() else len(self.tasks)
             #self.generator_wrapper([*self.tasks.iterrows()][0], self.simulation_method)# For testing
-            with multiprocessing.Pool(num_cores) as p:
-                print(f"INFO: Generator starting at {start.strftime('%H:%M:%S')} using {num_cores} cores for {len(self.tasks)} tasks...")
-                random.seed(RANDOM_SEED)
-                log_config = p.map(partial(self.generator_wrapper, SIMULATION_METHOD=self.simulation_method)
-                                   ,[(index, row) for index, row in self.tasks.iterrows()])
-            self.log_config = log_config
+
+            log_configs: List[Dict[str, EventLog]] = []
+
+            for index, row in self.tasks.iterrows():
+                print(f"INFO: Generating log for task {index+1}/{len(self.tasks)}...")
+                log_config = self.generator_wrapper((index, row), self.simulation_method)
+                log_configs.append(log_config)
+
+            # with multiprocessing.Pool(num_cores) as p:
+            #     print(f"INFO: Generator starting at {start.strftime('%H:%M:%S')} using {num_cores} cores for {len(self.tasks)} tasks...")
+            #     random.seed(RANDOM_SEED)
+            #     log_config = p.map(partial(self.generator_wrapper, SIMULATION_METHOD=self.simulation_method)
+            #                        ,[(index, row) for index, row in self.tasks.iterrows()])
+            self.log_config = log_configs
 
         else:
             random.seed(RANDOM_SEED)
@@ -233,39 +246,30 @@ class GenerateEventLogs():
         if task.objectives.get('ratio_unique_traces_per_trace'):#HOTFIX
             task.objectives['ratio_variants_per_number_of_traces']=task.objectives.pop('ratio_unique_traces_per_trace')
 
-        save_path = get_output_key_value_location(task.task_series.to_dict(),
-                                         self.output_path, identifier, self.feature_keys)+".xes"
-
-        write_xes(log_config['log'], save_path)
-        add_extension_before_traces(save_path)
-        print("SUCCESS: Saved generated event log in", save_path)
+        print(log_config)
         features_to_dump = log_config['features']
 
         #TODO: Replace hotfix
-        if features_to_dump.get('ratio_unique_traces_per_trace'):#HOTFIX
+        if features_to_dump.get('ratio_unique_traces_per_trace'): #HOTFIX
             features_to_dump['ratio_variants_per_number_of_traces']=features_to_dump.pop('ratio_unique_traces_per_trace')
-        features_to_dump['log']= os.path.split(save_path)[1].split(".")[0]
-        # calculating the manhattan distance of the generated log to the target features
-        #features_to_dump['distance_to_target'] = calculate_manhattan_distance(self.objectives, features_to_dump)
         features_to_dump['target_similarity'] = compute_similarity(task.objectives, features_to_dump)
-        dump_features_json(features_to_dump, save_path)
 
         return log_config
 
-    class GeneratorTask():
+    class GeneratorTask:
         def __init__(self, task_tuple, generator):
             try:
                 self.identifier = [x for x in task_tuple[1] if isinstance(x, str)][0]
             except IndexError:
                 self.identifier = task_tuple[0]+1
             self.task_series = task_tuple[1].loc[lambda x, identifier=self.identifier: x!=identifier]
-            self.objectives = self.task_series.dropna().to_dict()
+
+            # self.objectives = self.task_series.dropna().to_dict()
+            self.objectives = {key: 0.0 for key in self.task_series["feature_params"]["feature_set"]}
             self.config_space = generator.config_space
             self.n_trials = generator.n_trials
             self.generator = generator
             self.configs = {}
-
-            return
 
         def optimize(self):
             objectives = [*self.objectives.keys()]
@@ -310,7 +314,9 @@ class GenerateEventLogs():
 
         def eval_log(self, log):
             random.seed(RANDOM_SEED)
+
             features = compute_features_from_event_data(self.objectives.keys(), log)
+
             log_evaluation = {}
             for key in self.objectives.keys():
                 log_evaluation[key] = abs(self.objectives[key] - features[key])
@@ -355,8 +361,25 @@ def DEFact_wrapper(
     p1 = Process(target=play_DEFact, kwargs={'queue': output_queue, 'print_events': print_events})
     p1.start()
 
+
+    all_features = []
+    try:
+        all_features = main_gedi_event_loop(input_params, n_windows, output_queue, window_size)
+    except ValueError as e:
+        print(f"ERROR: {e}")
+        p1.terminate()
+
+    p1.terminate()
+    p1.join()
+    print("SUCCESS: All windows processed. Total features extracted:", len(all_features), all_features)
+    return all_features
+
+
+def main_gedi_event_loop(input_params, n_windows, output_queue, window_size):
     window = []
     all_features = []
+
+    feature_set: List[str] = input_params.get(FEATURE_PARAMS).get(FEATURE_SET)
 
     for window_num in range(1, n_windows + 1):
         print(f"    INFO: Processing window {window_num}/{n_windows}...")
@@ -364,12 +387,22 @@ def DEFact_wrapper(
         while len(window) < window_size:
             window.append(output_queue.get())
 
-        el = window_to_eventlog(window)
+        el: EventLog = window_to_eventlog(window)
 
         input_params['input_path'] = OUTPUT_PATH
-        feature_set = input_params.get(FEATURE_PARAMS).get(FEATURE_SET)
 
         features_per_window: Dict[str, float | int] = compute_features_from_event_data(feature_set, el)
+
+        params_for_gen = {
+            "generator_params": {
+                "experiment": copy.deepcopy(input_params),
+            },
+            "config_space": DEFAULT_CONFIG_SPACE,
+            "n_trials": 50
+        }
+
+        genED = GenerateEventLogs(params_for_gen)
+        log_config = genED.log_config
 
         all_features.append(features_per_window)
 
@@ -378,7 +411,4 @@ def DEFact_wrapper(
 
         window = []
 
-    p1.terminate()
-    p1.join()
-    print("SUCCESS: All windows processed. Total features extracted:", len(all_features), all_features)
     return all_features
