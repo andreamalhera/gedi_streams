@@ -1,0 +1,338 @@
+<log xes.version="2.0" xes.features="" xmlns="http://www.xes-standard.org/">
+  <extension name="Concept" prefix="concept" uri="http://www.xes-standard.org/concept.xesext" />
+  <extension name="Time" prefix="time" uri="http://www.xes-standard.org/time.xesext" />
+  <global scope="trace">
+    <string key="concept:name" value="" />
+  </global>
+  <global scope="event">
+    <string key="concept:name" value="" />
+    <date key="time:timestamp" value="1970-01-01T00:00:00" />
+  </global>
+  <classifier name="Activity" keys="concept:name" />
+    <trace>
+    <string key="concept:name" value="271" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-19T09:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-19T10:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-19T16:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-19T22:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-20T04:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="272" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-20T05:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-20T06:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-20T12:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-20T18:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-21T00:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="273" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-21T01:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-21T02:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-21T08:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-21T14:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-21T20:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="274" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-21T21:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-21T22:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-22T04:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-22T10:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-22T16:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="275" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-22T17:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-22T18:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-23T00:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-23T06:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-23T12:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="276" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-23T13:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-23T14:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-23T20:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-24T02:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-24T08:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="277" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-24T09:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-24T10:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-24T16:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-24T22:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-25T04:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="278" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-25T05:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-25T06:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-25T12:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-25T18:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-26T00:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="279" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-26T01:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-26T02:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-26T08:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-26T14:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-26T20:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="400" />
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-19T09:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-19T10:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-19T16:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-19T22:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-20T04:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="401" />
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-20T05:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-20T06:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-20T12:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-20T18:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-21T00:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="402" />
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-21T01:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-21T02:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-21T08:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-21T14:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-21T20:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="403" />
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-21T21:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-21T22:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-22T04:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-22T10:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-22T16:00:00" />
+    </event>
+  </trace>
+  <trace>
+    <string key="concept:name" value="736" />
+    <event>
+      <string key="concept:name" value="Register" />
+      <date key="time:timestamp" value="2025-03-18T09:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Hospitalize" />
+      <date key="time:timestamp" value="2025-03-18T10:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Medicate" />
+      <date key="time:timestamp" value="2025-03-18T16:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-18T22:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Surgery" />
+      <date key="time:timestamp" value="2025-03-19T04:00:00" />
+    </event>
+    <event>
+      <string key="concept:name" value="Discharge" />
+      <date key="time:timestamp" value="2025-03-19T10:00:00" />
+    </event>
+  </trace>
+</log>

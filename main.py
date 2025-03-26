@@ -1,5 +1,7 @@
 import os
 
+import pm4py
+
 import config
 from datetime import datetime as dt
 
@@ -29,25 +31,46 @@ def custom_print(*args, **kwargs):
 
 builtins.print = custom_print
 
+method_names = [
+    "activity_appearance_rate",
+    "variant_appearance_rate",
+    "drift_indicator",
+    "direct_follows_entropy",
+    "trace_length_variability",
+    "concurrent_activities_ratio",
+    "activity_entropy",
+    "unique_paths_ratio",
+    "structured_complexity",
+    "long_term_activity_shift",
+    "variant_stability",
+    "throughput_trend",
+    "cycle_time_variation"
+]
+
+baseline_features = [
+    'n_events',
+    'n_traces',
+    'n_windows',
+    'ratio_events_per_window',
+    'ratio_traces_per_window',
+    'n_traces_pw_min',
+    'n_traces_pw_max',
+    'n_traces_pw_mean',
+]
+
+
 
 if __name__=='__main__':
     PRINT_EVENTS = True
     N_WINDOWS = 10
-    WINDOW_SIZE = 30
+    WINDOW_SIZE = 50
     INPUT_PARAMS: dict[str, str | int | dict[str, list[str]]] = {
         'pipeline_step': 'feature_extraction',
         'input_path': 'data/test',
-        'feature_params': {'feature_set': [
-            'n_events',
-            'n_traces',
-            'n_windows',
-            'ratio_events_per_window',
-            'ratio_traces_per_window',
-            'n_traces_pw_min',
-            'n_traces_pw_max',
-            'n_traces_pw_mean',
-            ]
+        'feature_params': {
+            'feature_set': baseline_features + method_names
         },
+        "config_space": config.DEFAULT_CONFIG_SPACE,
         'output_path': 'output/plots',
         'real_eventlog_path': 'data/BaselineED_feat.csv',
         'plot_type': 'boxplot',
@@ -56,3 +79,4 @@ if __name__=='__main__':
     }
 
     all_features = DEFact_wrapper(N_WINDOWS, INPUT_PARAMS, WINDOW_SIZE, PRINT_EVENTS)
+
