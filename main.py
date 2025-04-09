@@ -48,27 +48,28 @@ method_names = [
 ]
 
 baseline_features = [
-    'n_events',
-    'n_traces',
-    'n_windows',
-    'ratio_events_per_window',
-    'ratio_traces_per_window',
-    'n_traces_pw_min',
-    'n_traces_pw_max',
-    'n_traces_pw_mean',
+    'temporal_dependency',
+    'case_concurrency',
+    'concept_stability',
+    'case_throughput_stability',
+    'parallel_activity_ratio',
+    'activity_duration_stability',
+    'case_priority_dynamics',
+    'concept_drift',
+    'long_term_dependencies',
 ]
 
 
 
 if __name__=='__main__':
     PRINT_EVENTS = True
-    N_WINDOWS = 10
+    N_WINDOWS = 5
     WINDOW_SIZE = 50
     INPUT_PARAMS: dict[str, str | int | dict[str, list[str]]] = {
         'pipeline_step': 'feature_extraction',
         'input_path': 'data/test',
         'feature_params': {
-            'feature_set': baseline_features + method_names
+            'feature_set': baseline_features
         },
         "config_space": config.DEFAULT_CONFIG_SPACE,
         'output_path': 'output/plots',

@@ -361,6 +361,7 @@ def DEFact_wrapper(
         terminate_DEFact(process)
 
     print("SUCCESS: All windows processed. Total features extracted:", len(all_features), all_features)
+    terminate_DEFact(process)
     return all_features
 
 
