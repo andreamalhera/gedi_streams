@@ -9,11 +9,11 @@ import sys
 import inspect
 import builtins
 
-from gedi_streams.generator.generator import DEFact_wrapper
+from gedi_streams.generator.generator import StreamProcessingManager
 
 original_print = builtins.print
 
-def custom_print(*args, **kwargs):
+def custom_print(*args, **kwargs ):
     caller_frame = inspect.currentframe().f_back
     frame_info = inspect.getframeinfo(caller_frame)
     file_name = frame_info.filename
@@ -31,7 +31,7 @@ def custom_print(*args, **kwargs):
 
 builtins.print = custom_print
 
-method_names = [
+stream_features = [
     "activity_appearance_rate",
     "variant_appearance_rate",
     "drift_indicator",
@@ -47,6 +47,20 @@ method_names = [
     "cycle_time_variation"
 ]
 
+advanced_features = [
+    'window_entropy_variability',
+    'drift_gradualness',
+    'variant_evolution_rate',
+    'recurrence_factor',
+    'temporal_locality',
+    'case_overlap_ratio',
+    'path_consistency',
+    'stream_homogeneity',
+    'loop_structure_stability',
+    'reachability_preservation',
+    'stream_homogeneity'
+]
+
 baseline_features = [
     'temporal_dependency',
     'case_concurrency',
@@ -55,7 +69,7 @@ baseline_features = [
     'parallel_activity_ratio',
     'activity_duration_stability',
     'case_priority_dynamics',
-    'concept_drift',
+    # 'concept_drift',
     'long_term_dependencies',
 ]
 
@@ -63,13 +77,13 @@ baseline_features = [
 
 if __name__=='__main__':
     PRINT_EVENTS = True
-    N_WINDOWS = 5
+    N_WINDOWS = 3
     WINDOW_SIZE = 50
     INPUT_PARAMS: dict[str, str | int | dict[str, list[str]]] = {
         'pipeline_step': 'feature_extraction',
         'input_path': 'data/test',
         'feature_params': {
-            'feature_set': baseline_features
+            'feature_set': advanced_features
         },
         "config_space": config.DEFAULT_CONFIG_SPACE,
         'output_path': 'output/plots',
@@ -79,5 +93,5 @@ if __name__=='__main__':
         'boxplot_width': 10
     }
 
-    all_features = DEFact_wrapper(N_WINDOWS, INPUT_PARAMS, WINDOW_SIZE, PRINT_EVENTS)
+    all_features = StreamProcessingManager.defact_wrapper(N_WINDOWS, INPUT_PARAMS, WINDOW_SIZE, PRINT_EVENTS)
 

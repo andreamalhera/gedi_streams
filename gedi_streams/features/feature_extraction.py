@@ -1,5 +1,8 @@
+import inspect
 import json
 import multiprocessing
+from idlelib.config_key import AVAILABLE_KEYS
+
 import pandas as pd
 import os
 import re
@@ -28,8 +31,8 @@ from gedi_streams.utils.param_keys import INPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from pathlib import Path
 from pm4py.objects.log.obj import EventLog
-from typing import List, Union, Type, Any, Set
-
+from typing import List, Union, Type, Any, Set, Callable, Optional
+from gedi_streams.features.advanced_stream_features import AdvancedStreamFeatures
 
 def inheritors(klass: Type[StreamFeature]) -> Set[Type[StreamFeature]]:
     """
@@ -45,40 +48,54 @@ def inheritors(klass: Type[StreamFeature]) -> Set[Type[StreamFeature]]:
                 work.append(child)
     return subclasses
 
-def _is_feature_class(name: str) -> bool:
-    try:
-        if re.match(r'^[A-Z][a-z]*([A-Z][a-z]*)*$', name):
-            #print("PASCAL CASE", name)
-            snake_case_name = re.sub(r'(?<!^)(?=[A-Z])', '_', name).lower()
-            return hasattr(eval(snake_case_name+"()"), 'available_class_methods')
-        elif re.match(r'^[a-z]+(_[a-z]+)*$', name):
-            #print("SNAKE CASE", name)
-            return hasattr(eval(name+"()"), 'available_class_methods')
-        else:
-            return False
-    except NameError:
-        return False
 
 def stream_feature_type(feature_name: str) -> str:
-    # classes = inheritors(StreamFeature)
-    # TODO: WTF is this?
-    classes_files = [os.path.join(os.path.dirname(__file__),feature_file) for feature_file in os.listdir(os.path.dirname(__file__)) if feature_file.endswith('.py')]
-    FEATURE_TYPES = [list_classes_in_file(feature_file) for feature_file in classes_files]
-    FEATURE_TYPES = [item for sublist in FEATURE_TYPES for item in sublist]
-    FEATURE_TYPES = [cls for cls in FEATURE_TYPES if _is_feature_class(cls)]
-    available_features = []
-    for feature_type in FEATURE_TYPES:
-        feature_type =  re.sub(r'(?<!^)(?=[A-Z])', '_', feature_type).lower()
-        try:
-            available_features.extend([*eval(feature_type)().available_class_methods])
-            available_features.append(str(feature_type))
-            available_features.append(re.sub(r'([a-z])([A-Z])', r'\1_\2', str(feature_type)).lower())
-        except NameError:
-            continue
-        if feature_name in available_features:
-            return feature_type
-    raise ValueError(f"ERROR: Invalid value for feature_key argument: {feature_name}. See README.md for " +
-                     f"supported feature_names or use a sublist of the following: {FEATURE_TYPES} or None")
+    classes: set[Type[StreamFeature]] = inheritors(StreamFeature)
+
+    class_has_method: Callable[[Type[StreamFeature]], Optional[Type[StreamFeature]]] = lambda cls: (
+        cls) if feature_name in cls.__dict__ else None
+
+    classes: set[Type[StreamFeature]] = set(filter(class_has_method, classes))
+
+    if len(classes) == 1:
+        return classes.pop().__name__
+    elif len(classes) > 1:
+        raise ValueError(f"ERROR: Multiple classes found for feature name '{feature_name}'. "
+                         f"Please specify a more specific feature name.")
+    else:
+        raise ValueError(f"ERROR: No class found for feature name '{feature_name}'. "
+                         f"Please check the feature name or add it to the StreamFeature class.")
+
+    # FEATURE_TYPES: List[str] = [cls.__name__ for cls in classes]
+    #
+    # get_class_members: Callable[[Type[StreamFeature]], List[str]] = lambda cls: list(
+    #     dict(
+    #         inspect.getmembers(cls, predicate=inspect.ismethod)).keys()
+    #     )
+    #
+    # AVAILABLE_METHODS: List[str] = [
+    #     member for cls in classes  for member in get_class_members(cls) if not member.startswith("_")
+    # ]
+    #
+    # if feature_name in AVAILABLE_METHODS:
+    #     return feature_name
+    #
+    # available_features = []
+    # for feature_type in FEATURE_TYPES:
+    #     feature_type =  re.sub(r'(?<!^)(?=[A-Z])', '_', feature_type).lower()
+    #     try:
+    #         available_features.extend([*eval(feature_type)().available_class_methods])
+    #         available_features.append(str(feature_type))
+    #         temp_debug = re.sub(r'([a-z])([A-Z])', r'\1_\2', str(feature_type)).lower()
+    #         print(temp_debug)
+    #         available_features.append(temp_debug)
+    #     except NameError:
+    #         continue
+    #     if feature_name in available_features:
+    #         return feature_type
+    #
+    # raise ValueError(f"ERROR: Invalid value for feature_key argument: {feature_name}. See README.md for " +
+    #                  f"supported feature_names or use a sublist of the following: {FEATURE_TYPES} or None")
 
 def get_feature_type(ft_name: str) -> str:
     ft_type = re.sub(r'(?<!^)(?=[A-Z])', '_', stream_feature_type(ft_name)).lower()
@@ -87,6 +104,7 @@ def get_feature_type(ft_name: str) -> str:
 
 def compute_features_from_event_data(feature_set: List[str], event_data: Union[EventLog, List[EventLog]]):
     feature_memory = ComputedFeatureMemory()
+
     if isinstance(event_data, list) and all(isinstance(window, EventLog) for window in event_data):
         feature_memory.clear_memory()
         for window in event_data:
@@ -95,20 +113,26 @@ def compute_features_from_event_data(feature_set: List[str], event_data: Union[E
 
     features_computation = {}
     for ft_name in feature_set:
-        #print("FEATURE_SET", feature_set)
+
         ft_type = get_feature_type(ft_name)
-        # print(f"INFO: Computing {ft_type}: {ft_name}")
         computation_command = f"{ft_type}("
+
         if ft_type != ft_name:
             computation_command += f"feature_names=['{ft_name}'],"
+
         computation_command += f").extract(event_data"
+
         try:
             ft_type = stream_feature_type(ft_name)
             computation_command = re.sub(r'^\w+(?=\()', ft_type, computation_command)
             computation_command +=', memory=feature_memory)'
         except (NameError, ValueError):
             computation_command +=')'
-        features_computation.update(eval(computation_command))
+
+        class_context: dict[str, Any] = {cls.__name__: cls for cls in inheritors(StreamFeature)}
+        class_context.update({"event_data": event_data, "feature_memory": feature_memory})
+
+        features_computation.update(eval(computation_command, class_context))
 
     feature_memory.set_multiple_features(features_computation)
     return features_computation

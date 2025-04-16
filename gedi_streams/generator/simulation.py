@@ -46,7 +46,7 @@ def play_DEFact(
     start_nodes: List[str] = list(set([trace[0]["concept:name"] for trace in event_log]))
     end_nodes: List[str] = list(set([trace[-1]["concept:name"] for trace in event_log]))
 
-    stoc: dict[list[str], float] = pm4py.get_stochastic_language(tree)
+    # stoc: dict[list[str], float] = pm4py.get_stochastic_language(tree)
     # markov_chain = stochastic_language_to_markov_chain(stoc)
     markov_chain = process_tree_to_markov_chain(tree, 3)
 

@@ -1,4 +1,5 @@
 import multiprocessing
+import random
 from collections import defaultdict
 from typing import Dict, Tuple, Any, List
 
@@ -53,53 +54,182 @@ def visualize_markov_chain(markov_chain: dict[str, dict[str, float]]) -> None:
     plt.title("Markov Chain Visualization")
     plt.show()
 
-def get_traces(process_tree: ProcessTree, loop_limit: int = 1) -> List[List[str]]:
+
+def get_traces(
+        process_tree: ProcessTree,
+        loop_limit: int = 1,
+        max_traces: int = 10000,
+        max_trace_length: int = 100,
+        sampling_ratio: float = 1.0,
+        memo: Dict = None,
+        trace_counter: List[int] = None
+) -> List[List[str]]:
     """
-    Recursively extracts all possible traces from a process tree up to a given loop limit.
+    Recursively extracts all possible traces from a process tree with optimization.
 
     :param process_tree: The process tree to extract traces from.
     :param loop_limit: Maximum number of loop iterations allowed.
+    :param max_traces: Maximum number of traces to generate.
+    :param max_trace_length: Maximum length of any trace.
+    :param sampling_ratio: Ratio of traces to sample (1.0 = all traces).
+    :param memo: Memoization dictionary to avoid redundant computations.
+    :param trace_counter: Counter to track the number of traces generated.
     :return: A list of traces, where each trace is a list of labels (str).
     """
+    # Initialize memoization and counter if not provided
+    if memo is None:
+        memo = {}
+    if trace_counter is None:
+        trace_counter = [0]
+
+    # Memoization key based on tree structure and loop limit
+    memo_key = (id(process_tree), loop_limit)
+
+    # Check if result is already in memo
+    if memo_key in memo:
+        return memo[memo_key]
+
+    # Base case: leaf node
     if process_tree.operator is None:
         if process_tree.label is not None and process_tree.label != 'tau':
-            return [[process_tree.label]]
+            result = [[process_tree.label]]
         else:
-            return [[]]
+            result = [[]]
+        memo[memo_key] = result
+        return result
+
     op = process_tree.operator
+
+    # Handle SEQUENCE operator
     if op == Operator.SEQUENCE:
-        traces: List[List[str]] = [[]]
+        result = [[]]
         for child in process_tree.children:
-            child_traces: List[List[str]] = get_traces(child, loop_limit)
-            new_traces: List[List[str]] = []
-            for trace in traces:
-                for c_trace in child_traces:
-                    new_traces.append(trace + c_trace)
-            traces = new_traces
-        return traces
+            child_traces = get_traces(
+                child, loop_limit, max_traces, max_trace_length,
+                sampling_ratio, memo, trace_counter
+            )
+
+            # Apply sampling if needed
+            if sampling_ratio < 1.0 and len(child_traces) > 10:
+                sample_size = max(1, int(len(child_traces) * sampling_ratio))
+                child_traces = random.sample(child_traces, sample_size)
+
+            # Combine traces with bounded generation
+            new_result = []
+            for trace in result:
+                for child_trace in child_traces:
+                    # Check length limit
+                    if len(trace) + len(child_trace) <= max_trace_length:
+                        new_result.append(trace + child_trace)
+                        trace_counter[0] += 1
+
+                        # Check trace count limit
+                        if trace_counter[0] >= max_traces:
+                            memo[memo_key] = new_result
+                            return new_result
+
+            result = new_result
+
+            # Apply intermediate sampling if we have too many traces
+            if len(result) > max_traces // 2:
+                if sampling_ratio < 1.0:
+                    sample_size = max(1, int(len(result) * sampling_ratio))
+                    result = random.sample(result, min(sample_size, max_traces))
+                else:
+                    result = result[:max_traces]
+
+    # Handle XOR or OR operator
     elif op == Operator.XOR or op == Operator.OR:
-        traces: List[List[str]] = []
+        result = []
+        traces_per_child = max(1, max_traces // len(process_tree.children))
+
         for child in process_tree.children:
-            traces.extend(get_traces(child, loop_limit))
-        return traces
+            child_traces = get_traces(
+                child, loop_limit, traces_per_child, max_trace_length,
+                sampling_ratio, memo, trace_counter
+            )
+
+            # Apply sampling if needed
+            if sampling_ratio < 1.0 and len(child_traces) > 10:
+                sample_size = max(1, int(len(child_traces) * sampling_ratio))
+                child_traces = random.sample(child_traces, sample_size)
+
+            # Add traces respecting bounds
+            result.extend(child_traces)
+
+            # Check if we have enough traces
+            if len(result) >= max_traces:
+                result = result[:max_traces]
+                memo[memo_key] = result
+                return result
+
+    # Handle LOOP operator - more efficient handling
     elif op == Operator.LOOP:
         if len(process_tree.children) < 2:
-            return get_traces(process_tree.children[0], loop_limit)
-        body_traces: List[List[str]] = get_traces(process_tree.children[0], loop_limit)
-        redo_traces: List[List[str]] = get_traces(process_tree.children[1], loop_limit)
-        combined_traces: List[List[str]] = []
-        for body in body_traces:
-            combined_traces.append(body)
-        for _ in range(loop_limit):
-            new_combined: List[List[str]] = []
-            for trace in combined_traces:
-                for redo in redo_traces:
-                    new_combined.append(trace + redo)
-            combined_traces.extend(new_combined)
-        return combined_traces
+            result = get_traces(
+                process_tree.children[0], loop_limit, max_traces, max_trace_length,
+                sampling_ratio, memo, trace_counter
+            )
+        else:
+            body_traces = get_traces(
+                process_tree.children[0], loop_limit, max_traces, max_trace_length,
+                sampling_ratio, memo, trace_counter
+            )
+            redo_traces = get_traces(
+                process_tree.children[1], loop_limit, max_traces, max_trace_length,
+                sampling_ratio, memo, trace_counter
+            )
+
+            # Start with body traces
+            result = body_traces.copy()
+
+            # For each loop iteration (using symbolic approach)
+            for i in range(loop_limit):
+                # Sample current traces to limit combinatorial explosion
+                current_traces = result
+                if len(current_traces) > 100:  # Arbitrary threshold
+                    sample_size = int(max(100, len(current_traces) * sampling_ratio))
+                    current_traces = random.sample(current_traces, min(sample_size, len(current_traces)))
+
+                # Sample redo traces
+                redo_sample = redo_traces
+                if len(redo_traces) > 100:  # Arbitrary threshold
+                    sample_size = int(max(100, len(redo_traces) * sampling_ratio))
+                    redo_sample = random.sample(redo_traces, min(sample_size, len(redo_traces)))
+
+                # Generate new combined traces
+                new_traces = []
+                for base_trace in current_traces:
+                    for redo_trace in redo_sample:
+                        # Apply length limit
+                        if len(base_trace) + len(redo_trace) <= max_trace_length:
+                            new_traces.append(base_trace + redo_trace)
+                            trace_counter[0] += 1
+
+                # Apply sampling to new traces if needed
+                if len(new_traces) > max_traces // 2:
+                    if sampling_ratio < 1.0:
+                        sample_size = max(1, int(len(new_traces) * sampling_ratio))
+                        new_traces = random.sample(new_traces, min(sample_size, len(new_traces)))
+                    else:
+                        new_traces = new_traces[:max_traces // 2]
+
+                # Add new traces but keep within bounds
+                result.extend(new_traces)
+                if len(result) >= max_traces:
+                    result = result[:max_traces]
+                    break
+
     else:
         raise NotImplementedError(f"Operator {op} not supported in trace extraction.")
 
+    # Apply final sampling if needed
+    if len(result) > max_traces:
+        result = result[:max_traces]
+
+    # Store in memo and return
+    memo[memo_key] = result
+    return result
 
 def process_tree_to_markov_chain(process_tree: ProcessTree, loop_limit: int = 1) -> Dict[str, Dict[str, float]]:
     """

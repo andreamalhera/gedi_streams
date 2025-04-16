@@ -1,5 +1,7 @@
 import inspect
 import math
+from collections.abc import Callable
+
 import numpy as np
 import datetime
 from collections import defaultdict, Counter
@@ -10,7 +12,26 @@ from scipy.stats import entropy
 from gedi_streams.features.memory import ComputedFeatureMemory
 from pm4py.objects.log.obj import EventLog
 
+
 class StreamFeature(Feature):
+    def __init__(self, feature_names='stream'):
+        super().__init__(feature_names)
+        self.feature_type='stream'
+        self.available_class_methods = dict(inspect.getmembers(StreamFeature, predicate=inspect.ismethod))
+        if self.feature_type in feature_names:
+            self.feature_names = [*self.available_class_methods.keys()]
+        else:
+            self.feature_names = feature_names
+
+    def window(self, stream):
+        return # TODO: attributes_filter.get_attribute_values(log, "concept:name")
+
+    @classmethod
+    def n_events_per_window(stream):
+        return # TODO
+
+
+class StructuredStreamFeature(StreamFeature):
     def __init__(self, feature_names='stream_features', memory=None):
         """
         Initialize the StreamFeature feature extractor.
@@ -25,12 +46,15 @@ class StreamFeature(Feature):
         """
         super().__init__(feature_names)
         self.feature_type = 'stream_features'
-        self.available_class_methods = dict(inspect.getmembers(StreamFeature,
+        self.available_class_methods = dict(inspect.getmembers(StructuredStreamFeature,
                                                                predicate=inspect.ismethod))
         if self.feature_type in feature_names:
             self.feature_names = [*self.available_class_methods.keys()]
         else:
             self.feature_names = feature_names
+
+    def __getitem__(self, item: str) -> Callable[[EventLog, ComputedFeatureMemory], float]:
+        return self.available_class_methods[item]
 
     def extract(self, log: EventLog, memory: ComputedFeatureMemory):
         feature_names = self.feature_names

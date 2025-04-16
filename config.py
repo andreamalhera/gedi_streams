@@ -25,7 +25,7 @@ def get_model_params_list(alg_json_file: str) :#-> list[dict]:
             ]
 
 DEFAULT_CONFIG_SPACE = {
-    'mode': [5, 20],
+    'mode': [15, 35],
     'sequence': [0.5, 1],
     'choice': [0.01, 1],
     'parallel': [0],
