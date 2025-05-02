@@ -58,14 +58,19 @@ class ConfigurationManager:
         })
 
     @staticmethod
-    def convert_list_params_to_tuples(config_dict: Dict) -> Dict:
-        """Converts list parameters to tuples for ConfigurationSpace."""
-        config_tuples = {}
+    def convert_list_params_to_tuples(config_dict: Dict[str, Any]) -> Dict[str, Union[Any, tuple]]:
+        """
+        Converts list parameters to tuples for ConfigurationSpace, if applicable.
+
+        :param config_dict: Dictionary of configuration parameters.
+        :return: Dictionary with list values converted to tuples when appropriate.
+        """
+        config_tuples: Dict[str, Union[Any, tuple]] = {}
         for k, v in config_dict.items():
-            if len(v) == 1:
-                config_tuples[k] = v[0]
+            if isinstance(v, list):
+                config_tuples[k] = v[0] if len(v) == 1 else tuple(v)
             else:
-                config_tuples[k] = tuple(v)
+                config_tuples[k] = v
         return config_tuples
 
 

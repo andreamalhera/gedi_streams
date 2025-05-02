@@ -43,9 +43,19 @@ def play_DEFact(
     tree: pm4py.ProcessTree = create_PTLG(config.sample_configuration())
     print(tree)
     event_log: EventLog = play_out(tree)
-    start_nodes: List[str] = list(set([trace[0]["concept:name"] for trace in event_log]))
-    end_nodes: List[str] = list(set([trace[-1]["concept:name"] for trace in event_log]))
 
+    if event_log is None or len(event_log) == 0:
+        return
+
+    start_nodes: List[str] = []
+    end_nodes: List[str] = []
+
+    for trace in event_log:
+        if len(trace) > 0:
+            start_nodes.append(trace[0]["concept:name"])
+            end_nodes.append(trace[-1]["concept:name"])
+        else:
+            return None
     # stoc: dict[list[str], float] = pm4py.get_stochastic_language(tree)
     # markov_chain = stochastic_language_to_markov_chain(stoc)
     markov_chain = process_tree_to_markov_chain(tree, 3)
