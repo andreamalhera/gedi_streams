@@ -6,7 +6,6 @@ dependencies:
    - python=3.12
    - pip:
       - pandas==2.2.3
-      - numpy==1.26.4
       - ConfigSpace==1.2.0
       - feeed==1.2.0
       - smac==2.2.0
@@ -19,3 +18,12 @@ dependencies:
       - pytest~=8.3.3
       - pm4py~=2.7.2
       - imbalanced-learn~=0.12.4
+      - numpy~=1.26.4
+      - networkx~=3.0
+      - kafka-python==2.0.2
+      - scheduled-futures==1.1.0
+      - PyYAML~=6.0.1
+      - python-dotenv~=1.0.1
+      - future~=0.18.2
+      - requests~=2.25.1
+      - process-mining-core~=0.1.3

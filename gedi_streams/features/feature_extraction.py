@@ -1,22 +1,147 @@
+import inspect
 import json
 import multiprocessing
+from idlelib.config_key import AVAILABLE_KEYS
+
 import pandas as pd
 import os
+import re
+import sys
 
 from datetime import datetime as dt
-from functools import partial
+from feeed.activities import Activities as activities
+from feeed.end_activities import EndActivities as end_activities
+from feeed.epa_based import Epa_based as epa_based
+from feeed.eventropies import Eventropies as eventropies
 from feeed.feature_extractor import extract_features
-from pathlib import Path
+from feeed.feature_extractor import feature_type
+from feeed.simple_stats import SimpleStats as simple_stats
+from feeed.start_activities import StartActivities as start_activities
+from feeed.trace_length import TraceLength as trace_length
+from feeed.trace_variant import TraceVariant as trace_variant
+from functools import partial
+from gedi_streams.features.memory import ComputedFeatureMemory
+from gedi_streams.features.simple_stream_stats import SimpleStreamStats as simple_stream_stats
+from gedi_streams.features.n_traces import NTracesPerWindow as n_traces_per_window
+from gedi_streams.features.stream_feature import StreamFeature
+from gedi_streams.utils.column_mappings import column_mappings
+from gedi_streams.utils.io_helpers import dump_features_json
+from gedi_streams.utils.io_helpers import list_classes_in_file
 from gedi_streams.utils.param_keys import INPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
-from gedi_streams.utils.io_helpers import dump_features_json
-from gedi_streams.utils.column_mappings import column_mappings
+from pathlib import Path
+from pm4py.objects.log.obj import EventLog
+from typing import List, Union, Type, Any, Set, Callable, Optional
+from gedi_streams.features.advanced_stream_features import AdvancedStreamFeatures
+
+def inheritors(klass: Type[StreamFeature]) -> Set[Type[StreamFeature]]:
+    """
+    Possible rework of the class collection code
+    """
+    subclasses: Set[Type[StreamFeature]] = set()
+    work: List[Type[StreamFeature]] = [klass]
+    while work:
+        parent = work.pop()
+        for child in parent.__subclasses__():
+            if child not in subclasses:
+                subclasses.add(child)
+                work.append(child)
+    return subclasses
+
+
+def stream_feature_type(feature_name: str) -> str:
+    classes: set[Type[StreamFeature]] = inheritors(StreamFeature)
+
+    class_has_method: Callable[[Type[StreamFeature]], Optional[Type[StreamFeature]]] = lambda cls: (
+        cls) if feature_name in cls.__dict__ else None
+
+    classes: set[Type[StreamFeature]] = set(filter(class_has_method, classes))
+
+    if len(classes) == 1:
+        return classes.pop().__name__
+    elif len(classes) > 1:
+        raise ValueError(f"ERROR: Multiple classes found for feature name '{feature_name}'. "
+                         f"Please specify a more specific feature name.")
+    else:
+        raise ValueError(f"ERROR: No class found for feature name '{feature_name}'. "
+                         f"Please check the feature name or add it to the StreamFeature class.")
+
+    # FEATURE_TYPES: List[str] = [cls.__name__ for cls in classes]
+    #
+    # get_class_members: Callable[[Type[StreamFeature]], List[str]] = lambda cls: list(
+    #     dict(
+    #         inspect.getmembers(cls, predicate=inspect.ismethod)).keys()
+    #     )
+    #
+    # AVAILABLE_METHODS: List[str] = [
+    #     member for cls in classes  for member in get_class_members(cls) if not member.startswith("_")
+    # ]
+    #
+    # if feature_name in AVAILABLE_METHODS:
+    #     return feature_name
+    #
+    # available_features = []
+    # for feature_type in FEATURE_TYPES:
+    #     feature_type =  re.sub(r'(?<!^)(?=[A-Z])', '_', feature_type).lower()
+    #     try:
+    #         available_features.extend([*eval(feature_type)().available_class_methods])
+    #         available_features.append(str(feature_type))
+    #         temp_debug = re.sub(r'([a-z])([A-Z])', r'\1_\2', str(feature_type)).lower()
+    #         print(temp_debug)
+    #         available_features.append(temp_debug)
+    #     except NameError:
+    #         continue
+    #     if feature_name in available_features:
+    #         return feature_type
+    #
+    # raise ValueError(f"ERROR: Invalid value for feature_key argument: {feature_name}. See README.md for " +
+    #                  f"supported feature_names or use a sublist of the following: {FEATURE_TYPES} or None")
+
+def get_feature_type(ft_name: str) -> str:
+    ft_type = re.sub(r'(?<!^)(?=[A-Z])', '_', stream_feature_type(ft_name)).lower()
+    return ft_type
+
+
+def compute_features_from_event_data(feature_set: List[str], event_data: Union[EventLog, List[EventLog]]):
+    feature_memory = ComputedFeatureMemory()
+
+    if isinstance(event_data, list) and all(isinstance(window, EventLog) for window in event_data):
+        feature_memory.clear_memory()
+        for window in event_data:
+            compute_features_from_event_data(feature_set, window)
+        return feature_memory.get_all_features()
+
+    features_computation = {}
+    for ft_name in feature_set:
+
+        ft_type = get_feature_type(ft_name)
+        computation_command = f"{ft_type}("
+
+        if ft_type != ft_name:
+            computation_command += f"feature_names=['{ft_name}'],"
+
+        computation_command += f").extract(event_data"
+
+        try:
+            ft_type = stream_feature_type(ft_name)
+            computation_command = re.sub(r'^\w+(?=\()', ft_type, computation_command)
+            computation_command +=', memory=feature_memory)'
+        except (NameError, ValueError):
+            computation_command +=')'
+
+        class_context: dict[str, Any] = {cls.__name__: cls for cls in inheritors(StreamFeature)}
+        class_context.update({"event_data": event_data, "feature_memory": feature_memory})
+
+        features_computation.update(eval(computation_command, class_context))
+
+    feature_memory.set_multiple_features(features_computation)
+    return features_computation
+
 def get_sortby_parameter(elem):
     number = int(elem.rsplit(".")[0].rsplit("_", 1)[1])
     return number
 
-
-class EventLogFile:
+class EventDataFile:
     def __init__(self, filename, folder_path):
         self.root_path: Path = Path(folder_path)
         self.filename: str = filename
@@ -25,71 +150,32 @@ class EventLogFile:
     def filepath(self) -> str:
         return str(os.path.join(self.root_path, self.filename))
 
-class EventLogFeatures(EventLogFile):
-    def __init__(self, filename=None, folder_path='data/event_log', params=None, logs=None, ft_params=None):
-        super().__init__(filename, folder_path)
-        if ft_params == None:
-            self.params = None
-            self.feat = None
-            return
-        elif ft_params.get(FEATURE_PARAMS) == None:
-            self.params = {FEATURE_SET: None}
-        else:
-            #TODO: Replace hotfix
-            self.params=ft_params.get(FEATURE_PARAMS)
-            if 'ratio_variants_per_number_of_traces' in self.params.get(FEATURE_SET):#HOTFIX
-                self.params[FEATURE_SET] = ['ratio_unique_traces_per_trace'\
-                                                if feat=='ratio_variants_per_number_of_traces'\
-                                                else feat for feat in self.params.get(FEATURE_SET)]
+class UnsupportedFileExtensionError(Exception):
+    """Custom exception for unsupported file extensions."""
+    pass
 
-        # TODO: handle parameters in main, not in features. Move to main.py
-        if ft_params[INPUT_PATH]:
-            input_path = ft_params[INPUT_PATH]
-            if os.path.isfile(input_path):
-                self.root_path = Path(os.path.split(input_path)[0])
-                self.filename = os.path.split(input_path)[-1]
-            else:
-                self.root_path = Path(input_path)
-                # Check if directory exists, if not, create it
-                if not os.path.exists(input_path):
-                    os.makedirs(input_path)
-                self.filename = sorted(os.listdir(input_path))
+class FeatureExtraction(EventDataFile):
+    def __init__(self, filename=None, folder_path='data/event_log', params=None, logs=None, ft_params=None, queue=None):
+        super().__init__(filename, folder_path)
+        self._parse_params(ft_params)
 
         try:
-            start = dt.now()
-            print("=========================== EventLogFeatures Computation===========================")
-
+            self.start = dt.now()
+            print("=========================== FeatureExtraction Computation===========================")
             print(f"INFO: Running with {ft_params}")
-
-            if str(self.filename).endswith('csv'): # Returns dataframe from loaded metafeatures file
-                self.feat = pd.read_csv(self.filepath)
-                columns_to_rename = {col: column_mappings()[col] for col in self.feat.columns if col in column_mappings()}
-                self.feat.rename(columns=columns_to_rename, inplace=True)
-                print(f"SUCCESS: EventLogFeatures loaded features from {self.filepath}")
-            elif isinstance(self.filename, list): # Computes metafeatures for list of .xes files
+            if str(self.filename).endswith('csv'): # Returns dataframe from loaded features file
+                self._load_features()
+            elif isinstance(self.filename, list) or str(self.filename).endswith('.xes'): # Computes features from list of files in directory
                 combined_features=pd.DataFrame()
-                if self.filename[0].endswith(".json"):
-                    self.filename = [ filename for filename in self.filename if filename.endswith(".json")]
-                    dfs = []
-                    for filename in self.filename:
-                        print(f"INFO: Reading features from {os.path.join(self.root_path, filename)}")
-                        data = pd.read_json(str(os.path.join(self.root_path,filename)), lines=True)
-                        #data['log']=filename.replace("genEL","").rsplit("_",2)[0]
-                        #print(data)
-                        dfs.append(data)
-                    combined_features= pd.concat(dfs, ignore_index = True)
-
-                    self.feat = combined_features
-                    self.filename = os.path.split(self.root_path)[-1] + '_feat.csv'
-                    self.root_path=Path(os.path.split(self.root_path)[0])
-                    combined_features.to_csv(self.filepath, index=False)
-                    print(f"SUCCESS: EventLogFeatures took {dt.now()-start} sec. Saved {len(self.feat.columns)} features for {len(self.feat)} in {self.filepath}")
-                    print("=========================== ~ EventLogFeatures Computation=========================")
-                    return
-                else:
+                if isinstance(self.filename, str):
+                    self.filename = [self.filename]
+                elif self.filename[0].endswith(".json"): # Aggregates feature results from multiple .json files
+                    self._aggregate_features()
+                elif self.filename[0].endswith(".xes"): # Computes features for list of .xes files
                     self.filename = [ filename for filename in self.filename if filename.endswith(".xes")]
+                else:
+                    pass
 
-                # TODO: only include xes logs in self.filename, otherwise it will result in less rows. Implement skip exception with warning
                 #self.extract_features_wrapper(self.filename[0], feature_set=self.params[FEATURE_SET]) #TESTING ONLY
                 try:
                     num_cores = multiprocessing.cpu_count() if len(
@@ -97,7 +183,7 @@ class EventLogFeatures(EventLogFile):
                     with multiprocessing.Pool(num_cores) as p:
                         try:
                             print(
-                                f"INFO: EventLogFeatures starting at {start.strftime('%H:%M:%S')} using {num_cores} cores for {len(self.filename)} files, namely {self.filename}...")
+                                f"INFO: FeatureExtraction starting at {self.start.strftime('%H:%M:%S')} using {num_cores} cores for {len(self.filename)} files, namely {self.filename}...")
                             result = p.map(partial(self.extract_features_wrapper, feature_set = self.params[FEATURE_SET])
                                        , self.filename)
                             result = [i for i in result if i is not None]
@@ -117,7 +203,7 @@ class EventLogFeatures(EventLogFile):
 
                 except KeyError as error:
                     print("Ignoring KeyError", error)
-                    # Aggregates metafeatures in saved Jsons into dataframe
+                    # Aggregates features in saved Jsons into dataframe
                     path_to_json = f"output/features/{str(self.root_path).split('/',1)[1]}"
                     df = pd.DataFrame()
                     # Iterate over the files in the directory
@@ -137,10 +223,62 @@ class EventLogFeatures(EventLogFile):
                 self.feat = combined_features
         except (IOError, FileNotFoundError) as err:
             print(err)
-            print(f"Cannot load {self.filepath}. Double check for file or change config 'load_results' to false")
+            print(f"ERROR: Cannot load {self.filepath}. Double check for file or change config 'load_results' to false")
         else:
-            print(f"SUCCESS: EventLogFeatures took {dt.now()-start} sec. Saved {len(self.feat.columns)-1} features for {len(self.feat)} in {self.filepath}")
-            print("=========================== ~ EventLogFeatures Computation=========================")
+            print(f"SUCCESS: FeatureExtraction took {dt.now()-self.start} sec. Saved {len(self.feat.columns)-1} features for {len(self.feat)} in {self.filepath}")
+            print("=========================== ~ FeatureExtraction Computation=========================")
+
+    def _parse_params(self, params):
+        if params == None:
+            self.params = None
+            self.feat = None
+            return
+        elif params.get(FEATURE_PARAMS) == None:
+            self.params = {FEATURE_SET: None}
+        else:
+            #TODO: Replace hotfix
+            self.params=params.get(FEATURE_PARAMS)
+            if 'ratio_variants_per_number_of_traces' in self.params.get(FEATURE_SET):#HOTFIX
+                self.params[FEATURE_SET] = ['ratio_unique_traces_per_trace'\
+                                                if feat=='ratio_variants_per_number_of_traces'\
+                                                else feat for feat in self.params.get(FEATURE_SET)]
+        if params[INPUT_PATH]:
+            input_path = params[INPUT_PATH]
+            if os.path.isfile(input_path):
+                self.root_path = Path(os.path.split(input_path)[0])
+                self.filename = os.path.split(input_path)[-1]
+            else:
+                self.root_path = Path(input_path)
+                # Check if directory exists, if not, create it
+                if not os.path.exists(input_path):
+                    os.makedirs(input_path)
+                self.filename = sorted(os.listdir(input_path))
+        return
+
+    def _load_features(self):
+        self.feat = pd.read_csv(self.filepath)
+        columns_to_rename = {col: column_mappings()[col] for col in self.feat.columns if col in column_mappings()}
+        self.feat.rename(columns=columns_to_rename, inplace=True)
+        print(f"SUCCESS: FeatureExtraction loaded features from {self.filepath}")
+
+    def _aggregate_features(self):
+        self.filename = [ filename for filename in self.filename if filename.endswith(".json")]
+        dfs = []
+        for filename in self.filename:
+            print(f"INFO: Reading features from {os.path.join(self.root_path, filename)}")
+            data = pd.read_json(str(os.path.join(self.root_path,filename)), lines=True)
+            #data['log']=filename.replace("genEL","").rsplit("_",2)[0]
+            #print(data)
+            dfs.append(data)
+        combined_features= pd.concat(dfs, ignore_index = True)
+
+        self.feat = combined_features
+        self.filename = os.path.split(self.root_path)[-1] + '_feat.csv'
+        self.root_path=Path(os.path.split(self.root_path)[0])
+        combined_features.to_csv(self.filepath, index=False)
+        print(f"SUCCESS: FeatureExtraction took {dt.now()-self.start} sec. Saved {len(self.feat.columns)} features for {len(self.feat)} in {self.filepath}")
+        print("=========================== ~ FeatureExtraction Computation=========================")
+        return
 
     #TODO: Implement optional trying to read already computed jsons first.
     def extract_features_wrapper(self, file, feature_set=None):
@@ -161,4 +299,3 @@ class EventLogFeatures(EventLogFile):
         print(f"  DONE: {file_path}. FEEED computed {feature_set}")
         dump_features_json(features, os.path.join(self.root_path,identifier))
         return features
-

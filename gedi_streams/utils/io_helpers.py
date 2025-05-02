@@ -1,10 +1,13 @@
 import glob
+import inspect
 import json
 import os
 import pandas as pd
 import re
 import shutil
 import numpy as np
+import importlib.util
+
 from collections import defaultdict
 from pathlib import PurePath
 from scipy.spatial.distance import euclidean
@@ -112,3 +115,27 @@ def compute_similarity(v1, v2):
         # print("VECTORS: ", vec1, vec2, target_similarity)
 
         return target_similarity
+
+def list_classes_in_file(file_path):
+    """
+    Lists all classes defined in the given Python file.
+    :param file_path: Path to the Python file
+    :return: List of class names in the file
+    """
+    file_path = os.path.abspath(file_path)  # Ensure the file path is absolute
+    classes = []
+
+    # Read the file content to create a module from the file
+    module_name = os.path.basename(file_path).replace(".py", "")
+    file_dir = os.path.dirname(file_path)
+
+    # Import the file as a module
+    spec = importlib.util.spec_from_file_location(module_name, file_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+
+    # Inspect the module for classes
+    for name, obj in inspect.getmembers(module):
+        if inspect.isclass(obj) and obj.__module__ == module_name:
+                classes.append(name)
+    return classes

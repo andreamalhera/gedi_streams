@@ -358,8 +358,8 @@ class GenerationPlotter(object):
         self.output_path = output_path
         self.input_path = input_path
         self.model_params = model_params
-        if "metafeatures" in gen_cfg.columns:
-            self.gen = gen_cfg.metafeatures
+        if "features" in gen_cfg.columns:
+            self.gen = gen_cfg.features
             self.gen=pd.concat([pd.DataFrame.from_dict(entry, orient="Index").T for entry in self.gen]).reset_index(drop=True)
         else:
             self.gen = gen_cfg.reset_index(drop=True)
@@ -460,7 +460,7 @@ class GenerationPlotter(object):
                         [v[k][idx], gen_entry[k].values[0]],
                         c="green", alpha=0.25)
                 # Plot textual annotation
-                axes[idx_ax].annotate(gen_entry['log'].values[0], 
+                axes[idx_ax].annotate(gen_entry['log'].values[0],
                                       (gen_entry[reference_feature].values[0], gen_entry[k].values[0]), 
                                       fontsize=5)
 
