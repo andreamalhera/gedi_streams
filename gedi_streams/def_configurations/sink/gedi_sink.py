@@ -12,6 +12,7 @@ def translate_event_to_event(event: PMCEvent) -> PM4PYEvent:
     event_ref["concept:name"] = event.get_activity()
     event_ref["time:timestamp"] = event.get_timestamp()
     event_ref["case:concept:name"] = event.get_case()
+    event_ref["lifecycle:transition"] = event.lifecycle_transition
 
     event_ref["attr:node"] = event.node
     event_ref["attr:group"] = event.group
@@ -31,7 +32,7 @@ class GEDIAdapter(Sink):
         self.queue.put(pm4py_event)
 
         if not self.disable_console_print:
-            print(f"[{event.node}] -> ({event.get_activity()} : {event.get_case()} : {event.get_timestamp()})")
+            print(f"[{event.node}] -> ({event.get_activity()} : {event.get_case()} : {event.get_timestamp()} : {event.lifecycle_transition})")
 
     def start_timeframe(self):
 

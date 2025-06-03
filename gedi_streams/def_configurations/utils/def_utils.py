@@ -1,13 +1,17 @@
 import multiprocessing
 import random
 from collections import defaultdict
-from typing import Dict, Tuple, Any, List
+from typing import Dict, Tuple, Any, List, Set
 
 import networkx as nx
 import matplotlib.pyplot as plt
+import pandas as pd
 import pm4py
 from pm4py import ProcessTree
-from pm4py.objects.process_tree.obj import Operator
+from pm4py.objects.log.obj import EventLog
+
+from typing import Dict
+import pandas as pd
 
 from distributed_event_factory.core.abstract_datasource import DataSource
 from distributed_event_factory.core.datasource import GenericDataSource
@@ -23,254 +27,378 @@ from distributed_event_factory.provider.transition.duration.constant_duration im
 from distributed_event_factory.provider.transition.transition.constant_transition import ConstantTransitionProvider
 from gedi_streams.def_configurations.sink.gedi_sink import GEDIAdapter
 
-def visualize_markov_chain(markov_chain: dict[str, dict[str, float]]) -> None:
+LOOP_ACTIVITY_SUFFIX: str = "_self_loop"
+DEFAULT_GROUP_ID: str = "markov_chain"
+START_STATE_NAME: str = "<start>"
+END_STATE_NAME: str = "<end>"
+
+NODE_COLOR: str = 'white'
+NODE_BORDER_COLOR: str = 'black'
+NODE_BORDER_WIDTH: float = 1.0
+NODE_LABEL_COLOR: str = 'black'  # Color for the labels on the nodes
+
+# Edge styles
+EDGE_FONT_COLOR: str = 'black'
+ARROW_SIZE_DEFAULT: int = 15
+
+# Font styles
+FONT_SIZE_DEFAULT: int = 10
+FONT_WEIGHT: str = 'bold'
+
+# Node size
+NODE_SIZE_DEFAULT: int = 1000
+
+# Layout parameters
+LAYOUT_K_FACTOR: float = 0.9  # Optimal distance factor for spring_layout, increased for better separation
+LAYOUT_ITERATIONS: int = 75  # Increased iterations for spring_layout convergence
+LAYOUT_SEED: int = 42  # Seed for reproducible layouts
+
+# Figure settings
+FIGURE_SIZE: Tuple[int, int] = (12, 12)
+
+# Thresholds for dynamic adjustments
+NODE_COUNT_THRESHOLD_MEDIUM: int = 20
+NODE_COUNT_THRESHOLD_LARGE: int = 50
+
+# Scaling factors for dynamic adjustments
+SCALE_FACTOR_MEDIUM_GRAPH: float = 0.8
+SCALE_FACTOR_LARGE_GRAPH: float = 0.6
+NODE_SIZE_MIN: int = 100
+FONT_SIZE_MIN: int = 12
+ARROW_SIZE_MIN: int = 8
+
+
+def visualize_markov_chain(markov_chain: Dict[str, Dict[str, float]]) -> None:
     """
-    Visualizes a Markov chain as a directed weighted graph.
+    Visualizes a Markov chain as a directed weighted graph, optimized for larger chains
+    with specific node and edge label styling.
+
+    Nodes are white with a black border. Edge labels and node labels are black.
+    Layout and element sizes are adjusted to reduce node overlap for larger chains.
 
     :param markov_chain: Dictionary representation of the Markov chain.
-    :return: None.
+                         Example: {'A': {'B': 0.5, 'C': 0.5}, 'B': {'A': 1.0}}
+    :return: None. Displays the plot.
     """
-    G = nx.DiGraph()
+    graph: nx.DiGraph = nx.DiGraph()
 
+    node_names_to_add: Set[str] = set()
+    for state_key_outer in markov_chain:
+        node_names_to_add.add(str(state_key_outer))
+        for target_key_inner in markov_chain[state_key_outer]:
+            if isinstance(markov_chain[state_key_outer][target_key_inner], dict):
+                # New format with concurrency metadata
+                node_names_to_add.add(str(target_key_inner))
+            else:
+                # Old format - direct probability
+                node_names_to_add.add(str(target_key_inner))
+
+    for name in node_names_to_add:
+        graph.add_node(name)
+
+    # Add edges
     for state, transitions in markov_chain.items():
-        for next_state, prob in transitions.items():
-            G.add_edge(state, next_state, weight=prob)
+        for next_state, transition_data in transitions.items():
+            if isinstance(transition_data, dict):
+                # New format with concurrency metadata
+                prob = transition_data.get('probability', transition_data.get('prob', 0))
+            else:
+                # Old format - direct probability
+                prob = transition_data
 
-    pos = nx.spring_layout(G, seed=42)
-    edge_labels = {(u, v): f'{d["weight"]:.2f}' for u, v, d in G.edges(data=True)}
+            if prob > 0:  # Optionally, only draw edges with non-zero probability
+                graph.add_edge(str(state), str(next_state), weight=prob)
+
+    num_nodes: int = graph.number_of_nodes()
+    pos: Dict[str, Tuple[float, float]]
+
+    if num_nodes == 0:  # Should be caught by the initial check, but as a safeguard
+        plt.figure(figsize=FIGURE_SIZE)
+        plt.title("Markov Chain Visualization (No Nodes)")
+        plt.axis('off')
+        plt.show()
+        return
+    elif num_nodes == 1:
+        single_node_name: str = list(graph.nodes())[0]
+        pos = {single_node_name: (0.5, 0.5)}
+    else:
+        pos = nx.spring_layout(
+            graph,
+            k=LAYOUT_K_FACTOR,
+            iterations=LAYOUT_ITERATIONS,
+            seed=LAYOUT_SEED
+        )
+
+    edge_labels: Dict[Tuple[str, str], str] = {
+        (str(u), str(v)): f'{d.get("weight", 0.0):.2f}'
+        for u, v, d in graph.edges(data=True)
+    }
+
+    current_node_size: int = NODE_SIZE_DEFAULT
+    current_font_size: int = FONT_SIZE_DEFAULT
+    current_arrow_size: int = ARROW_SIZE_DEFAULT
+
+    if num_nodes > NODE_COUNT_THRESHOLD_LARGE:
+        scale_factor: float = float(NODE_COUNT_THRESHOLD_LARGE) / num_nodes
+        current_node_size = max(NODE_SIZE_MIN, int(NODE_SIZE_DEFAULT * scale_factor * SCALE_FACTOR_LARGE_GRAPH))
+        current_font_size = max(FONT_SIZE_MIN, int(FONT_SIZE_DEFAULT * scale_factor * SCALE_FACTOR_LARGE_GRAPH))
+        current_arrow_size = max(ARROW_SIZE_MIN, int(ARROW_SIZE_DEFAULT * scale_factor * SCALE_FACTOR_LARGE_GRAPH))
+    elif num_nodes > NODE_COUNT_THRESHOLD_MEDIUM:
+        scale_factor: float = float(NODE_COUNT_THRESHOLD_MEDIUM) / num_nodes
+        current_node_size = max(NODE_SIZE_MIN, int(NODE_SIZE_DEFAULT * scale_factor * SCALE_FACTOR_MEDIUM_GRAPH))
+        current_font_size = max(FONT_SIZE_MIN, int(FONT_SIZE_DEFAULT * scale_factor * SCALE_FACTOR_MEDIUM_GRAPH))
+        current_arrow_size = max(ARROW_SIZE_MIN, int(ARROW_SIZE_DEFAULT * scale_factor * SCALE_FACTOR_MEDIUM_GRAPH))
+
+    plt.figure(figsize=FIGURE_SIZE)
 
     nx.draw(
-        G,
+        graph,
         pos,
         with_labels=True,
-        node_size=1000,
-        node_color='lightblue',
-        arrowsize=20,
-        font_size=12,
-        font_weight='bold',
+        node_size=current_node_size,
+        node_color=NODE_COLOR,
+        edgecolors=NODE_BORDER_COLOR,
+        linewidths=NODE_BORDER_WIDTH,
+        arrowsize=current_arrow_size,
+        font_size=current_font_size,
+        font_weight=FONT_WEIGHT,
+        font_color=NODE_LABEL_COLOR
     )
-    nx.draw_networkx_edge_labels(G, pos, edge_labels=edge_labels, font_color='red')
+
+    nx.draw_networkx_edge_labels(
+        graph,
+        pos,
+        edge_labels=edge_labels,
+        font_color=EDGE_FONT_COLOR,
+        font_size=max(FONT_SIZE_MIN, current_font_size - 2),
+        font_weight=FONT_WEIGHT
+    )
 
     plt.title("Markov Chain Visualization")
+    plt.axis('off')
+    plt.tight_layout()
     plt.show()
 
 
-def get_traces(
-        process_tree: ProcessTree,
-        loop_limit: int = 1,
-        max_traces: int = 10000,
-        max_trace_length: int = 100,
-        sampling_ratio: float = 1.0,
-        memo: Dict = None,
-        trace_counter: List[int] = None
-) -> List[List[str]]:
+def analyze_process_tree_parallelism(tree: ProcessTree) -> Dict[str, Set[str]]:
     """
-    Recursively extracts all possible traces from a process tree with optimization.
+    Analyze process tree to identify activities that should execute concurrently.
 
-    :param process_tree: The process tree to extract traces from.
-    :param loop_limit: Maximum number of loop iterations allowed.
-    :param max_traces: Maximum number of traces to generate.
-    :param max_trace_length: Maximum length of any trace.
-    :param sampling_ratio: Ratio of traces to sample (1.0 = all traces).
-    :param memo: Memoization dictionary to avoid redundant computations.
-    :param trace_counter: Counter to track the number of traces generated.
-    :return: A list of traces, where each trace is a list of labels (str).
+    Returns:
+        Dict mapping each activity to set of activities it should run concurrently with
     """
-    # Initialize memoization and counter if not provided
-    if memo is None:
-        memo = {}
-    if trace_counter is None:
-        trace_counter = [0]
+    parallel_groups: Dict[str, Set[str]] = defaultdict(set)
 
-    # Memoization key based on tree structure and loop limit
-    memo_key = (id(process_tree), loop_limit)
+    def traverse_tree(node: ProcessTree, parent_is_parallel: bool = False) -> Set[str]:
+        """
+        Recursively traverse the process tree to find parallel constructs.
+        Returns set of activity names found in this subtree.
+        """
+        if node is None:
+            return set()
 
-    # Check if result is already in memo
-    if memo_key in memo:
-        return memo[memo_key]
-
-    # Base case: leaf node
-    if process_tree.operator is None:
-        if process_tree.label is not None and process_tree.label != 'tau':
-            result = [[process_tree.label]]
+        # Get the operator type
+        if hasattr(node, 'operator'):
+            operator = node.operator
         else:
-            result = [[]]
-        memo[memo_key] = result
-        return result
+            operator = None
 
-    op = process_tree.operator
+        # Base case: leaf node (activity)
+        if not hasattr(node, 'children') or not node.children:
+            if hasattr(node, 'label') and node.label:
+                return {node.label}
+            else:
+                return set()
 
-    # Handle SEQUENCE operator
-    if op == Operator.SEQUENCE:
-        result = [[]]
-        for child in process_tree.children:
-            child_traces = get_traces(
-                child, loop_limit, max_traces, max_trace_length,
-                sampling_ratio, memo, trace_counter
-            )
+        # Recursive case: internal node with children
+        current_activities = set()
 
-            # Apply sampling if needed
-            if sampling_ratio < 1.0 and len(child_traces) > 10:
-                sample_size = max(1, int(len(child_traces) * sampling_ratio))
-                child_traces = random.sample(child_traces, sample_size)
+        if operator and str(operator) == 'Operator.PARALLEL':
+            # This is a parallel operator - its children should execute concurrently
+            child_activity_groups = []
 
-            # Combine traces with bounded generation
-            new_result = []
-            for trace in result:
-                for child_trace in child_traces:
-                    # Check length limit
-                    if len(trace) + len(child_trace) <= max_trace_length:
-                        new_result.append(trace + child_trace)
-                        trace_counter[0] += 1
+            for child in node.children:
+                child_activities = traverse_tree(child, parent_is_parallel=True)
+                child_activity_groups.append(child_activities)
+                current_activities.update(child_activities)
 
-                        # Check trace count limit
-                        if trace_counter[0] >= max_traces:
-                            memo[memo_key] = new_result
-                            return new_result
-
-            result = new_result
-
-            # Apply intermediate sampling if we have too many traces
-            if len(result) > max_traces // 2:
-                if sampling_ratio < 1.0:
-                    sample_size = max(1, int(len(result) * sampling_ratio))
-                    result = random.sample(result, min(sample_size, max_traces))
-                else:
-                    result = result[:max_traces]
-
-    # Handle XOR or OR operator
-    elif op == Operator.XOR or op == Operator.OR:
-        result = []
-        traces_per_child = max(1, max_traces // len(process_tree.children))
-
-        for child in process_tree.children:
-            child_traces = get_traces(
-                child, loop_limit, traces_per_child, max_trace_length,
-                sampling_ratio, memo, trace_counter
-            )
-
-            # Apply sampling if needed
-            if sampling_ratio < 1.0 and len(child_traces) > 10:
-                sample_size = max(1, int(len(child_traces) * sampling_ratio))
-                child_traces = random.sample(child_traces, sample_size)
-
-            # Add traces respecting bounds
-            result.extend(child_traces)
-
-            # Check if we have enough traces
-            if len(result) >= max_traces:
-                result = result[:max_traces]
-                memo[memo_key] = result
-                return result
-
-    # Handle LOOP operator - more efficient handling
-    elif op == Operator.LOOP:
-        if len(process_tree.children) < 2:
-            result = get_traces(
-                process_tree.children[0], loop_limit, max_traces, max_trace_length,
-                sampling_ratio, memo, trace_counter
-            )
+            # Mark all activities in different parallel branches as concurrent with each other
+            for i, group1 in enumerate(child_activity_groups):
+                for j, group2 in enumerate(child_activity_groups):
+                    if i != j:  # Different parallel branches
+                        for activity1 in group1:
+                            for activity2 in group2:
+                                parallel_groups[activity1].add(activity2)
+                                parallel_groups[activity2].add(activity1)
         else:
-            body_traces = get_traces(
-                process_tree.children[0], loop_limit, max_traces, max_trace_length,
-                sampling_ratio, memo, trace_counter
-            )
-            redo_traces = get_traces(
-                process_tree.children[1], loop_limit, max_traces, max_trace_length,
-                sampling_ratio, memo, trace_counter
-            )
+            # Sequential, choice, loop, or other operator
+            for child in node.children:
+                child_activities = traverse_tree(child, parent_is_parallel=False)
+                current_activities.update(child_activities)
 
-            # Start with body traces
-            result = body_traces.copy()
+        return current_activities
 
-            # For each loop iteration (using symbolic approach)
-            for i in range(loop_limit):
-                # Sample current traces to limit combinatorial explosion
-                current_traces = result
-                if len(current_traces) > 100:  # Arbitrary threshold
-                    sample_size = int(max(100, len(current_traces) * sampling_ratio))
-                    current_traces = random.sample(current_traces, min(sample_size, len(current_traces)))
+    # Start traversal from root
+    traverse_tree(tree)
 
-                # Sample redo traces
-                redo_sample = redo_traces
-                if len(redo_traces) > 100:  # Arbitrary threshold
-                    sample_size = int(max(100, len(redo_traces) * sampling_ratio))
-                    redo_sample = random.sample(redo_traces, min(sample_size, len(redo_traces)))
+    return dict(parallel_groups)
 
-                # Generate new combined traces
-                new_traces = []
-                for base_trace in current_traces:
-                    for redo_trace in redo_sample:
-                        # Apply length limit
-                        if len(base_trace) + len(redo_trace) <= max_trace_length:
-                            new_traces.append(base_trace + redo_trace)
-                            trace_counter[0] += 1
 
-                # Apply sampling to new traces if needed
-                if len(new_traces) > max_traces // 2:
-                    if sampling_ratio < 1.0:
-                        sample_size = max(1, int(len(new_traces) * sampling_ratio))
-                        new_traces = random.sample(new_traces, min(sample_size, len(new_traces)))
-                    else:
-                        new_traces = new_traces[:max_traces // 2]
-
-                # Add new traces but keep within bounds
-                result.extend(new_traces)
-                if len(result) >= max_traces:
-                    result = result[:max_traces]
-                    break
-
-    else:
-        raise NotImplementedError(f"Operator {op} not supported in trace extraction.")
-
-    # Apply final sampling if needed
-    if len(result) > max_traces:
-        result = result[:max_traces]
-
-    # Store in memo and return
-    memo[memo_key] = result
-    return result
-
-def process_tree_to_markov_chain(process_tree: ProcessTree, loop_limit: int = 1) -> Dict[str, Dict[str, float]]:
+def build_markov_chain(event_log: pd.DataFrame, parallel_info: Dict[str, Set[str]] = None) -> Dict[
+    str, Dict[str, Dict[str, Any]]]:
     """
-    Converts a process tree into a Markov chain represented as a nested dictionary with transition probabilities.
+    Build a first-order Markov chain from an event log, including 'START' and 'END' pseudo-states.
+    Enhanced to include concurrency information from process tree structure.
 
-    :param process_tree: The process tree to convert.
-    :param loop_limit: Maximum number of loop iterations to consider.
-    :return: A Markov chain as a dictionary where keys are state labels and values are dictionaries
-             mapping successor state labels to transition probabilities.
+    :param event_log: DataFrame with columns 'case:concept:name', 'concept:name'.
+    :param parallel_info: Dict mapping activities to sets of concurrent activities
+    :return: A dict mapping each state to a dict of next-state information including probability and concurrency
     """
-    traces: List[List[str]] = get_traces(process_tree, loop_limit)
-    count_transitions: Dict[str, Dict[str, float]] = defaultdict(lambda: defaultdict(float))
+    if parallel_info is None:
+        parallel_info = {}
+
+    # sort by case and timestamp
+    df_sorted = event_log.sort_values(
+        by=['case:concept:name']
+    )
+    counts: Dict[str, Dict[str, int]] = {}
+
+    for _, group in df_sorted.groupby('case:concept:name'):
+        activities = group['concept:name'].tolist()
+        if not activities:
+            continue
+        # transition from START into each case
+        counts.setdefault(START_STATE_NAME, {}).setdefault(activities[0], 0)
+        counts[START_STATE_NAME][activities[0]] += 1
+        # transitions within the case
+        for current_act, next_act in zip(activities, activities[1:]):
+            counts.setdefault(current_act, {}).setdefault(next_act, 0)
+            counts[current_act][next_act] += 1
+        # transition from last activity to END
+        last_state = activities[-1]
+        counts.setdefault(last_state, {}).setdefault(END_STATE_NAME, 0)
+        counts[last_state][END_STATE_NAME] += 1
+
+    # convert counts to probabilities and add concurrency information
+    chain: Dict[str, Dict[str, Dict[str, Any]]] = {}
+    for state, transitions in counts.items():
+        total = sum(transitions.values())
+        chain[state] = {}
+        for next_state, count in transitions.items():
+            probability = count / total
+
+            # Determine if this transition should be concurrent
+            is_concurrent = False
+            if state in parallel_info and next_state in parallel_info[state]:
+                is_concurrent = True
+
+            chain[state][next_state] = {
+                'probability': probability,
+                'concurrent': is_concurrent
+            }
+
+    # ensure <end> appears as a state (with no outgoing transitions)
+    chain.setdefault(END_STATE_NAME, {})
+
+    return chain
+
+
+def convert_process_tree_to_dataframe_event_log(tree_: ProcessTree) -> Tuple[
+    pd.DataFrame, List[str], List[str], Dict[str, Set[str]]]:
+    """
+    Convert a process tree to a DataFrame event log.
+    Enhanced to also return parallelism information.
+
+    :param tree_: ProcessTree object.
+    :return: Tuple of (DataFrame, start_nodes, end_nodes, parallel_info)
+    """
+    # Analyze the process tree for parallel constructs
+    parallel_info = analyze_process_tree_parallelism(tree_)
+
+    # Play out the process tree
+    traces: EventLog = pm4py.play_out(tree_, parameters={"num_traces": 100})
+    case_id: int = 0
+
+    start_nodes: List[str] = []
+    end_nodes: List[str] = []
+
     for trace in traces:
-        states: List[str] = ['START'] + [s for s in trace if s != ''] + ['END']
-        for i in range(len(states) - 1):
-            count_transitions[states[i]][states[i + 1]] += 1.0
-    markov_chain: Dict[str, Dict[str, float]] = {}
-    for state, next_states in count_transitions.items():
-        total: float = sum(next_states.values())
-        markov_chain[state] = {next_state: count / total for next_state, count in next_states.items()}
-    return markov_chain
+        if len(trace) > 0 and "concept:name" in trace[0] and "concept:name" in trace[-1]:
+            start_nodes.append(trace[0]["concept:name"])
+            end_nodes.append(trace[-1]["concept:name"])
 
-def create_transition_event_provider(state: str, next_state: str) -> CustomEventDataProvider:
-    """Create an event data provider for a state transition."""
+        for event in trace:
+            event["case:concept:name"] = case_id
+        case_id += 1
+
+    return pm4py.convert_to_dataframe(traces), [START_STATE_NAME], [END_STATE_NAME], parallel_info
+
+
+def create_transition_event_provider(
+        state: str,
+        next_state: str,
+        is_loop: bool,
+        is_concurrent: bool = False,  # NEW: structure-derived concurrency
+        activity_duration: int = 5
+) -> CustomEventDataProvider:
+    """
+    Create an event data provider for a state transition.
+    If is_loop is True, the activity name is modified.
+    Enhanced to use structure-based concurrency instead of random probability.
+
+    :param state: Current state name
+    :param next_state: Next state name
+    :param is_loop: Whether this is a loop transition
+    :param is_concurrent: Whether this transition should be concurrent (from process structure)
+    :param activity_duration: Duration for the activity
+    """
+    activity_name: str = state
+
+    if is_loop:
+        activity_name = f"{state}{LOOP_ACTIVITY_SUFFIX}"
+
     return CustomEventDataProvider(
-        duration_provider=ConstantDurationProvider(1),
-        activity_provider=ConstantActivityProvider(state),
-        transition_provider=ConstantTransitionProvider(next_state)
+        duration_provider=ConstantDurationProvider(activity_duration),
+        activity_provider=ConstantActivityProvider(activity_name),
+        transition_provider=ConstantTransitionProvider(next_state),
+        concurrent_next=is_concurrent,  # Use structure-derived concurrency
     )
 
 
 def create_event_selection_provider(
         state: str,
-        transitions: Dict[str, float]
+        transitions: Dict[str, Dict[str, Any]],  # Enhanced structure
+        activity_duration: int = 5
 ) -> GenericProbabilityEventSelectionProvider:
-    """Create an event selection provider based on transition probabilities."""
-    potential_events: List[EventDataProvider] = []
-    probability_distribution = []
+    """
+    Create an event selection provider based on transition probabilities.
+    Enhanced to handle new transition structure with concurrency information.
 
-    for next_state, probability in transitions.items():
-        event_provider = create_transition_event_provider(state, next_state)
+    :param state: Current state name
+    :param transitions: Dictionary of next states and their transition information
+    :param activity_duration: Duration for the activity
+    """
+    potential_events: List[EventDataProvider] = []
+    probability_distribution: List[float] = []
+
+    for next_state, transition_info in transitions.items():
+        # Extract probability and concurrency from transition info
+        if isinstance(transition_info, dict):
+            probability = transition_info.get('probability', transition_info.get('prob', 0))
+            is_concurrent = transition_info.get('concurrent', False)
+        else:
+            # Backward compatibility - assume old format
+            probability = transition_info
+            is_concurrent = False
+
+        is_loop: bool = (state == next_state)
+        event_provider: CustomEventDataProvider = create_transition_event_provider(
+            state,
+            next_state,
+            is_loop,
+            is_concurrent,  # Use structure-derived concurrency
+            activity_duration
+        )
         potential_events.append(event_provider)
         probability_distribution.append(probability)
 
@@ -282,29 +410,65 @@ def create_event_selection_provider(
 
 def create_state_data_source(
         state: str,
-        transitions: Dict[str, float]
+        transitions: Dict[str, Dict[str, Any]],  # Enhanced structure
+        activity_duration: int = 5
 ) -> GenericDataSource:
-    """Create a data source for a state in the Markov chain."""
-    event_provider = create_event_selection_provider(state, transitions)
+    """
+    Create a data source for a state in the Markov chain.
+    Enhanced to handle new transition structure.
+
+    :param state: State name
+    :param transitions: Dictionary of next states and their transition information
+    :param activity_duration: Duration for the activity
+    """
+    event_provider: GenericProbabilityEventSelectionProvider = \
+        create_event_selection_provider(state, transitions, activity_duration)
 
     return GenericDataSource(
         data_source_id=DataSourceId(state),
-        group_id="markov_chain",
+        group_id=DEFAULT_GROUP_ID,
         event_provider=event_provider
     )
 
 
-def create_start_data_source(start_nodes: List[str]) -> GenericDataSource:
-    """Create a data source for the start state."""
-    potential_events = [
-        create_transition_event_provider("<start>", node)
-        for node in start_nodes
-    ]
-    probability_distribution = [1 / len(start_nodes) for _ in start_nodes]
+def create_start_data_source(
+        markov_chain: Dict[str, Dict[str, Dict[str, Any]]],  # Enhanced structure
+        activity_duration: int = 5
+) -> GenericDataSource:
+    """
+    Create a data source for the start state.
+    Enhanced to handle new markov chain structure.
+
+    :param markov_chain: The markov chain dictionary with enhanced structure
+    :param activity_duration: Duration for the activity
+    """
+    transitions: Dict[str, Dict[str, Any]] = markov_chain[START_STATE_NAME]
+
+    potential_events: List[EventDataProvider] = []
+    probability_distribution: List[float] = []
+
+    for node, transition_info in transitions.items():
+        if isinstance(transition_info, dict):
+            probability = transition_info.get('probability', transition_info.get('prob', 0))
+            is_concurrent = transition_info.get('concurrent', False)
+        else:
+            # Backward compatibility
+            probability = transition_info
+            is_concurrent = False
+
+        event_provider = create_transition_event_provider(
+            START_STATE_NAME,
+            node,
+            is_loop=False,
+            is_concurrent=is_concurrent,
+            activity_duration=activity_duration
+        )
+        potential_events.append(event_provider)
+        probability_distribution.append(probability)
 
     return GenericDataSource(
-        data_source_id=DataSourceId("<start>"),
-        group_id="markov_chain",
+        data_source_id=DataSourceId(START_STATE_NAME),
+        group_id=DEFAULT_GROUP_ID,
         event_provider=GenericProbabilityEventSelectionProvider(
             potential_events=potential_events,
             probability_distribution=probability_distribution
@@ -314,17 +478,29 @@ def create_start_data_source(start_nodes: List[str]) -> GenericDataSource:
 
 def update_end_nodes(
         datasource_definitions: Dict[str, DataSource],
-        end_nodes: List[str]
+        end_nodes: List[str],
+        activity_duration: int = 5
 ) -> None:
-    """Update data sources for end nodes."""
+    """
+    Update data sources for end nodes to transition to a terminal <end> state.
+    Simplified to remove unused concurrency parameters.
 
-    for (key, ds) in datasource_definitions.items():
+    :param datasource_definitions: Dictionary of data sources
+    :param end_nodes: List of end node names
+    :param activity_duration: Duration for the activity
+    """
+    for key, ds in datasource_definitions.items():
         if key in end_nodes:
+            event_provider: CustomEventDataProvider = create_transition_event_provider(
+                key,
+                END_STATE_NAME,
+                is_loop=False,
+                is_concurrent=False,  # End transitions are never concurrent
+                activity_duration=activity_duration
+            )
             ds.event_provider = GenericProbabilityEventSelectionProvider(
-                potential_events=[
-                    create_transition_event_provider(key, "<end>")
-                ],
-                probability_distribution=[1]
+                potential_events=[event_provider],
+                probability_distribution=[1.0]
             )
 
 
@@ -335,23 +511,19 @@ def build_event_factory(
         print_events: bool
 ) -> EventFactory:
     """Build and configure the event factory with data sources and sink."""
-    event_factory = EventFactory()
+    event_factory: EventFactory = EventFactory()
 
-    # Add all data sources
     for name, data_source in datasource_definitions.items():
         event_factory.add_datasource(name, data_source)
 
-    # Add GEDI sink
-    datasource_keys = list(datasource_definitions.keys())
-    event_factory.add_sink(
+    datasource_keys: List[str] = list(datasource_definitions.keys())
+    gedi_sink: GEDIAdapter = GEDIAdapter(
         "gedi-sink",
-        GEDIAdapter(
-            "gedi-sink",
-            datasource_keys,
-            queue,
-            disable_console_print=not print_events
-        )
+        datasource_keys,
+        queue,
+        disable_console_print=not print_events
     )
+    event_factory.add_sink("gedi-sink", gedi_sink)
 
     event_factory.add_file(f"{submodule_path}/config/simulation/stream.yaml")
 
@@ -359,28 +531,41 @@ def build_event_factory(
 
 
 def init_and_compile_def_using_markov_chain(
-        markov_chain: Dict[str, Dict[str, float]],
+        markov_chain: Dict[str, Dict[str, Dict[str, Any]]],  # Enhanced structure
         start_nodes: List[str],
         end_nodes: List[str],
         submodule_path: str,
         queue: multiprocessing.Queue,
         print_events: bool = False,
+        concurrent_probability: float = 0.3,  # Deprecated but kept for compatibility
+        activity_duration: int = 5
 ) -> EventFactory:
-    """Initialize and compile event factory definition using a Markov chain."""
+    """
+    Initialize and compile event factory definition using a Markov chain.
+    Enhanced to use structure-based concurrency instead of random probability.
 
-    # Create data sources for each state in the Markov chain
-    datasource_definitions = {
-        state: create_state_data_source(state, transitions)
+    :param markov_chain: The markov chain dictionary with enhanced structure
+    :param start_nodes: List of start node names
+    :param end_nodes: List of end node names
+    :param submodule_path: Path to submodule
+    :param queue: Multiprocessing queue
+    :param print_events: Whether to print events
+    :param concurrent_probability: Deprecated - concurrency now comes from structure
+    :param activity_duration: Duration for the activity
+    """
+    print(
+        f"INFO: Building DEF with structure-based concurrency. Random concurrent_probability={concurrent_probability} is ignored.")
+
+    datasource_definitions: Dict[str, DataSource] = {
+        state: create_state_data_source(state, transitions, activity_duration)
         for state, transitions in markov_chain.items()
+        if state != START_STATE_NAME  # Handle start state separately
     }
 
-    # Add start state data source
-    datasource_definitions["<start>"] = create_start_data_source(start_nodes)
+    datasource_definitions[START_STATE_NAME] = create_start_data_source(markov_chain, activity_duration)
 
-    # Update end nodes to transition to <end>
-    update_end_nodes(datasource_definitions, end_nodes)
+    update_end_nodes(datasource_definitions, end_nodes, activity_duration)
 
-    # Build and return the event factory
     event_factory: EventFactory = build_event_factory(
         datasource_definitions,
         submodule_path,
@@ -389,4 +574,3 @@ def init_and_compile_def_using_markov_chain(
     )
 
     return event_factory
-

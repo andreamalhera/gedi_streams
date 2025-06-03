@@ -1,0 +1,436 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="38ccc6f5-b5f4-4752-9dbb-433505f230d7" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/DistributedEventFactory/config/datasource/long_term_dependencies/d0-start.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DistributedEventFactory/config/datasource/long_term_dependencies/d1-a.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DistributedEventFactory/config/datasource/long_term_dependencies/d2-b.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DistributedEventFactory/config/datasource/long_term_dependencies/d3-c.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DistributedEventFactory/config/datasource/long_term_dependencies/d4-e.yaml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/simulation/scheduler.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/DistributedEventFactory/test/gedi_sink.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/evaluation/stream_features.csv" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gedi_streams/generator/configuration_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gedi_streams/generator/down_stream_task_evaluation.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gedi_streams/generator/task_manager.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/gedi_streams/generator/xes_file_formatter.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/plots/benchmark.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/plots/clipboard1.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/plots/feasibility.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/tests/evaluation/eval_script.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/config/simulation/stream.yaml" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/config/simulation/stream.yaml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/core/datasource_id.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/core/datasource_id.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/core/event.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/core/event.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/parser/datasource/data_source_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/parser/datasource/data_source_parser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/parser/datasource/event/event_data_list_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/parser/datasource/event/event_data_list_parser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/parser/kind_parser.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/parser/kind_parser.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/provider/event/event_data.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/provider/event/event_data.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/provider/event/event_provider.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/provider/event/event_provider.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/simulation/process_simulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/simulation/process_simulation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/simulation/stream.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/simulation/stream.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/DistributedEventFactory/test/integration_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/DistributedEventFactory/test/integration_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.py" beforeDir="false" afterPath="$PROJECT_DIR$/config.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/def_configurations/sink/gedi_sink.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/def_configurations/sink/gedi_sink.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/def_configurations/utils/def_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/def_configurations/utils/def_utils.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/features/advanced_stream_features.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/features/feature_extraction.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/features/feature_extraction.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/features/simple_stream_stats.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/features/simple_stream_stats.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/features/stream_feature.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/features/stream_feature.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/generator/generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/generator/generator.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/generator/generator_legacy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/generator/model.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/generator/model.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/generator/simulation.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/generator/simulation.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/plotter.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/plotter.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/gedi_streams/utils/functions.py" beforeDir="false" afterPath="$PROJECT_DIR$/gedi_streams/utils/configs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.py" beforeDir="false" afterPath="$PROJECT_DIR$/main.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/notebooks/gedi_figs4and5_representativeness.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/notebooks/gedi_figs4and5_representativeness.ipynb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/output/empty_file" beforeDir="false" afterPath="$PROJECT_DIR$/exper.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/feature_test_cases.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/feature_test_cases.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/mk_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/mk_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/petri_net.png" beforeDir="false" afterPath="$PROJECT_DIR$/tests/petri_net.png" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="FileTemplateManagerImpl">
+    <option name="RECENT_TEMPLATES">
+      <list>
+        <option value="Jupyter Notebook" />
+        <option value="Python Script" />
+      </list>
+    </option>
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;chimenkamp&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;git@github.com:andreamalhera/gedi_streams.git&quot;,
+    &quot;accountId&quot;: &quot;e821152d-0ae4-4f77-86b1-985adb938b59&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4
+}</component>
+  <component name="ProjectId" id="2q6NeZfZzCAUz4b95zezEL2ObAp" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Python tests.pytest for integration_test.IntegrationTest.test_integration.executor": "Run",
+    "Python tests.pytest for test_generator.test_DEFact_wrapper.executor": "Run",
+    "Python tests.pytest in test_gedi_sink.py.executor": "Run",
+    "Python.GEDI-streams.executor": "Run",
+    "Python.analyse_static_event_logs.executor": "Run",
+    "Python.benchmark.executor": "Debug",
+    "Python.benchmark_es_test.executor": "Run",
+    "Python.change.executor": "Run",
+    "Python.concurrency_behavior.executor": "Run",
+    "Python.eval_script.executor": "Run",
+    "Python.exper.executor": "Run",
+    "Python.features_test.executor": "Run",
+    "Python.gedi_sink.executor": "Run",
+    "Python.gedi_sink_test.executor": "Run",
+    "Python.heat_map.executor": "Run",
+    "Python.implementation.executor": "Run",
+    "Python.integration_test.executor": "Run",
+    "Python.main.executor": "Debug",
+    "Python.mk_test.executor": "Run",
+    "Python.mk_to_def.executor": "Run",
+    "Python.nasdasfasf.executor": "Run",
+    "Python.pt_to_mk.executor": "Run",
+    "Python.simulation.executor": "Run",
+    "Python.sss.executor": "Run",
+    "Python.time_line_plot.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "git-widget-placeholder": "#9 on feature/8-feature-stream-feature-…ation",
+    "last_opened_file_path": "/Users/christianimenkamp/Documents/Git-Repositorys/gedi_streams",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/output/plots" />
+      <recent name="$PROJECT_DIR$/evaluation" />
+      <recent name="$PROJECT_DIR$/plots" />
+      <recent name="$PROJECT_DIR$/DistributedEventFactory/config/datasource/long_term_dependencies" />
+    </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/plots/concurrency" />
+      <recent name="$PROJECT_DIR$/plots" />
+      <recent name="$PROJECT_DIR$/gedi_streams/features" />
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/output/plots" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Python.concurrency_behavior">
+    <configuration name="benchmark_es_test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="gedi_streams" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/benchmark_es_test.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="change" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="gedi_streams" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/plots" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plots/change.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="concurrency_behavior" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="gedi_streams" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/plots" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plots/concurrency_behavior.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="heat_map" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="gedi_streams" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/plots" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/plots/heat_map.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="nasdasfasf" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="gedi_streams" />
+      <option name="ENV_FILES" value="" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/nasdasfasf.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <recent_temporary>
+      <list>
+        <item itemvalue="Python.concurrency_behavior" />
+        <item itemvalue="Python.heat_map" />
+        <item itemvalue="Python.nasdasfasf" />
+        <item itemvalue="Python.change" />
+        <item itemvalue="Python.benchmark_es_test" />
+      </list>
+    </recent_temporary>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-js-predefined-d6986cc7102b-f27c65a3e318-JavaScript-PY-251.23774.444" />
+        <option value="bundled-python-sdk-890ed5b35930-d9c5bdb153f4-com.jetbrains.pycharm.pro.sharedIndexes.bundled-PY-251.23774.444" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="38ccc6f5-b5f4-4752-9dbb-433505f230d7" name="Changes" comment="" />
+      <created>1733979160470</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1733979160470</updated>
+      <workItem from="1733979161545" duration="8773000" />
+      <workItem from="1734012571104" duration="3281000" />
+      <workItem from="1734691185677" duration="1153000" />
+      <workItem from="1736514588003" duration="1004000" />
+      <workItem from="1741755314466" duration="18920000" />
+      <workItem from="1741780918921" duration="770000" />
+      <workItem from="1741844244326" duration="2470000" />
+      <workItem from="1741954311218" duration="729000" />
+      <workItem from="1742186509864" duration="2795000" />
+      <workItem from="1742189309892" duration="5201000" />
+      <workItem from="1742196509039" duration="36108000" />
+      <workItem from="1742389293454" duration="3014000" />
+      <workItem from="1742446277944" duration="18586000" />
+      <workItem from="1742535302548" duration="1424000" />
+      <workItem from="1742552522507" duration="345000" />
+      <workItem from="1742557556533" duration="7394000" />
+      <workItem from="1742970704463" duration="3347000" />
+      <workItem from="1742979516313" duration="4403000" />
+      <workItem from="1743997721021" duration="778000" />
+      <workItem from="1744018735224" duration="3919000" />
+      <workItem from="1744088114296" duration="1584000" />
+      <workItem from="1744175961866" duration="18183000" />
+      <workItem from="1744258704920" duration="6540000" />
+      <workItem from="1744270909659" duration="5469000" />
+      <workItem from="1744362389277" duration="4132000" />
+      <workItem from="1744602015807" duration="17536000" />
+      <workItem from="1744622677467" duration="10346000" />
+      <workItem from="1744773056456" duration="7235000" />
+      <workItem from="1744788746430" duration="1000" />
+      <workItem from="1744880558980" duration="898000" />
+      <workItem from="1745059250548" duration="4349000" />
+      <workItem from="1745767097712" duration="1000" />
+      <workItem from="1746169618486" duration="11944000" />
+      <workItem from="1746504522084" duration="2073000" />
+      <workItem from="1746591322559" duration="11330000" />
+      <workItem from="1746677924747" duration="12943000" />
+      <workItem from="1746691451044" duration="291000" />
+      <workItem from="1746695876482" duration="2814000" />
+      <workItem from="1746764641906" duration="6936000" />
+      <workItem from="1746774069448" duration="4702000" />
+      <workItem from="1746873899817" duration="27096000" />
+      <workItem from="1747046581925" duration="28824000" />
+      <workItem from="1747383222184" duration="45856000" />
+      <workItem from="1747726392617" duration="46197000" />
+      <workItem from="1747979387688" duration="98674000" />
+      <workItem from="1748512468211" duration="24613000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gedi_streams/features/feature_extraction.py</url>
+          <line>191</line>
+          <option name="timeStamp" value="18" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gedi_streams/features/feature_extraction.py</url>
+          <line>234</line>
+          <option name="timeStamp" value="19" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/tests/mk_to_def.py</url>
+          <line>85</line>
+          <option name="timeStamp" value="40" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/.venv/lib/python3.12/site-packages/pm4py/objects/conversion/heuristics_net/variants/to_petri_net.py</url>
+          <line>107</line>
+          <option name="timeStamp" value="57" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gedi_streams/features/feature_extraction.py</url>
+          <line>81</line>
+          <option name="timeStamp" value="77" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/simulation/stream.py</url>
+          <line>31</line>
+          <option name="timeStamp" value="97" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/DistributedEventFactory/distributed_event_factory/parser/kind_parser.py</url>
+          <line>13</line>
+          <option name="timeStamp" value="100" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file:///Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/queue.py</url>
+          <line>35</line>
+          <option name="timeStamp" value="103" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file:///Library/Frameworks/Python.framework/Versions/3.12/lib/python3.12/queue.py</url>
+          <line>132</line>
+          <option name="timeStamp" value="105" />
+        </line-breakpoint>
+        <line-breakpoint suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/plots/time_line_plot.py</url>
+          <line>19</line>
+          <option name="timeStamp" value="120" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/gedi_streams/generator/generator.py</url>
+          <line>794</line>
+          <option name="timeStamp" value="156" />
+        </line-breakpoint>
+      </breakpoints>
+      <default-breakpoints>
+        <breakpoint type="python-exception">
+          <properties notifyOnTerminate="true" exception="BaseException">
+            <option name="notifyOnTerminate" value="true" />
+          </properties>
+        </breakpoint>
+      </default-breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="com.intellij.coverage.CoverageDataManagerImpl">
+    <SUITE FILE_PATH="coverage/gedi_streams$simulation.coverage" NAME="simulation Coverage Results" MODIFIED="1733982546581" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/gedi_streams/generator" />
+    <SUITE FILE_PATH="coverage/gedi_streams$nasdasfasf.coverage" NAME="nasdasfasf Coverage Results" MODIFIED="1748542349043" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/gedi_streams$main.coverage" NAME="main Coverage Results" MODIFIED="1748495127658" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/gedi_streams$gedi_sink_test.coverage" NAME="gedi_sink_test Coverage Results" MODIFIED="1733987466649" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/gedi_streams$gedi_sink.coverage" NAME="gedi_sink Coverage Results" MODIFIED="1733982998555" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/gedi_streams$heat_map.coverage" NAME="heat_map Coverage Results" MODIFIED="1748580588753" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/plots" />
+    <SUITE FILE_PATH="coverage/gedi_streams$implementation.coverage" NAME="implementation Coverage Results" MODIFIED="1745063849266" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/evaluation" />
+    <SUITE FILE_PATH="coverage/gedi_streams$integration_test.coverage" NAME="integration_test Coverage Results" MODIFIED="1747627644842" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/DistributedEventFactory/test" />
+    <SUITE FILE_PATH="coverage/gedi_streams$sss.coverage" NAME="sss Coverage Results" MODIFIED="1748323513201" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/gedi_streams$pytest_in_test_gedi_sink_py.coverage" NAME="pytest in test_gedi_sink.py Coverage Results" MODIFIED="1733982973181" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/gedi_streams$mk_test.coverage" NAME="mk_test Coverage Results" MODIFIED="1747635949573" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/gedi_streams$change.coverage" NAME="change Coverage Results" MODIFIED="1748537356438" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/plots" />
+    <SUITE FILE_PATH="coverage/gedi_streams$analyse_static_event_logs.coverage" NAME="analyse_static_event_logs Coverage Results" MODIFIED="1748328753120" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/evaluation" />
+    <SUITE FILE_PATH="coverage/gedi_streams$pytest_for_test_generator_test_DEFact_wrapper.coverage" NAME="pytest for test_generator.test_DEFact_wrapper Coverage Results" MODIFIED="1741756668718" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/gedi_streams$eval_script.coverage" NAME="eval_script Coverage Results" MODIFIED="1746179976682" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests/evaluation" />
+    <SUITE FILE_PATH="coverage/gedi_streams$pt_to_mk.coverage" NAME="pt_to_mk Coverage Results" MODIFIED="1742366156505" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/gedi_streams$mk_to_def.coverage" NAME="mk_to_def Coverage Results" MODIFIED="1742447929164" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/gedi_streams$concurrency_behavior.coverage" NAME="concurrency_behavior Coverage Results" MODIFIED="1748581393898" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/plots" />
+    <SUITE FILE_PATH="coverage/gedi_streams$pytest_for_integration_test_IntegrationTest_test_integration.coverage" NAME="pytest for integration_test.IntegrationTest.test_integration Coverage Results" MODIFIED="1747045564565" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/DistributedEventFactory/test" />
+    <SUITE FILE_PATH="coverage/gedi_streams$benchmark_es_test.coverage" NAME="benchmark_es_test Coverage Results" MODIFIED="1748536035227" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/gedi_streams$benchmark.coverage" NAME="benchmark Coverage Results" MODIFIED="1748495115270" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/plots" />
+    <SUITE FILE_PATH="coverage/gedi_streams$features_test.coverage" NAME="features_test Coverage Results" MODIFIED="1746686285099" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+    <SUITE FILE_PATH="coverage/gedi_streams$time_line_plot.coverage" NAME="time_line_plot Coverage Results" MODIFIED="1747648918294" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/plots" />
+    <SUITE FILE_PATH="coverage/gedi_streams$exper.coverage" NAME="exper Coverage Results" MODIFIED="1748241309672" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
+    <SUITE FILE_PATH="coverage/gedi_streams$GEDI_streams.coverage" NAME="GEDI-streams Coverage Results" MODIFIED="1733979387446" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/tests" />
+  </component>
+</project>

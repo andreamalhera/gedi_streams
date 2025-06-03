@@ -1,28 +1,39 @@
 import copy
+import csv
+import datetime
 import multiprocessing
 import os
 import time
-import random
-import re
 import traceback
-import xml.etree.ElementTree as ET
-from typing import Dict, List, Any, Optional, Tuple, Union
-from xml.dom import minidom
+from random import shuffle
+from typing import Dict, List, Any, Tuple, Union, Optional
 from xml.sax.handler import all_features
 
+import pm4py
+from pm4py import generate_process_tree
+
 import pandas as pd
+import random
+import re
+import xml.etree.ElementTree as ET
+
 from ConfigSpace import Configuration, ConfigurationSpace
 from datetime import datetime as dt
 from functools import partial
-from multiprocessing import Process, Queue
-from pm4py import generate_process_tree, write_xes
-from pm4py.objects.log.obj import EventLog
+from pm4py import write_xes
+from pm4py.objects.heuristics_net.obj import HeuristicsNet
+from pm4py.objects.log.obj import EventLog, Event
 from pm4py.sim import play_out
 from smac import HyperparameterOptimizationFacade, Scenario
 from tabulate import tabulate
 
-from config import DEFAULT_CONFIG_SPACE
+from config import DEFAULT_CONFIG_SPACE, RANDOM_SEED
 from gedi_streams.features.feature_extraction import FeatureExtraction, compute_features_from_event_data
+from gedi_streams.generator.configuration_manager import ConfigurationManager
+from gedi_streams.generator.down_stream_task_evaluation import discovery_algorithm, get_models
+from gedi_streams.generator.task_manager import TaskManager
+from gedi_streams.generator.xes_file_formatter import XesFileFormatter
+
 from gedi_streams.utils.param_keys import OUTPUT_PATH, INPUT_PATH
 from gedi_streams.utils.param_keys.generator import GENERATOR_PARAMS, EXPERIMENT, CONFIG_SPACE, N_TRIALS, \
     SIMULATION_METHOD
@@ -33,474 +44,301 @@ from gedi_streams.utils.column_mappings import column_mappings
 from gedi_streams.utils.data_conversions import window_to_eventlog
 from gedi_streams.generator.model import create_PTLG
 from gedi_streams.generator.simulation import play_DEFact
+from multiprocessing import Process, Queue
+from xml.dom import minidom
 
-# Constants
-RANDOM_SEED = 10
+RESULTS_FILE: str = "results.csv"
 
+def save_results(results: Dict[str, float], file_path: str = RESULTS_FILE) -> None:
+    """Append a row of metrics to *file_path* in CSV format.
 
-class ConfigurationManager:
-    """Manages configurations for log generation."""
+    :param results: A mapping from metric names to their numeric values.
+    :param file_path: Destination CSV file path. Defaults to ``results.csv`` in
+        the current working directory.
+    :return : of objects.
+    :return: ``None`` – the function performs I/O but returns nothing.
+    """
+    file_exists: bool = os.path.isfile(file_path)
 
-    @staticmethod
-    def create_default_config_space() -> ConfigurationSpace:
-        """Creates a default configuration space."""
-        return ConfigurationSpace({
-            "mode": (5, 40),
-            "sequence": (0.01, 1),
-            "choice": (0.01, 1),
-            "parallel": (0.01, 1),
-            "loop": (0.01, 1),
-            "silent": (0.01, 1),
-            "lt_dependency": (0.01, 1),
-            "num_traces": (100, 1001),
-            "duplicate": (0),
-            "or": (0),
-        })
+    # Attach an execution timestamp so rows remain identifiable.
+    timestamp: str = datetime.datetime.utcnow().isoformat(timespec="seconds")
+    row: Dict[str, Union[str, float]] = {"timestamp": timestamp, **results}
 
-    @staticmethod
-    def convert_list_params_to_tuples(config_dict: Dict[str, Any]) -> Dict[str, Union[Any, tuple]]:
-        """
-        Converts list parameters to tuples for ConfigurationSpace, if applicable.
-
-        :param config_dict: Dictionary of configuration parameters.
-        :return: Dictionary with list values converted to tuples when appropriate.
-        """
-        config_tuples: Dict[str, Union[Any, tuple]] = {}
-        for k, v in config_dict.items():
-            if isinstance(v, list):
-                config_tuples[k] = v[0] if len(v) == 1 else tuple(v)
-            else:
-                config_tuples[k] = v
-        return config_tuples
-
-
-class TaskManager:
-    """Handles task loading and processing."""
-
-    @staticmethod
-    def get_tasks(experiment, output_path="", reference_feature=None) -> Tuple[pd.DataFrame, str]:
-        """Loads tasks from various sources."""
-        # Read tasks from file
-        if isinstance(experiment, str) and experiment.endswith(".csv"):
-            tasks = pd.read_csv(experiment, index_col=None)
-            output_path = os.path.join(output_path, os.path.split(experiment)[-1].split(".")[0])
-            if 'task' in tasks.columns:
-                tasks.rename(columns={"task": "log"}, inplace=True)
-        # Read tasks from a list in config file
-        elif isinstance(experiment, list):
-            tasks = pd.DataFrame.from_dict(data=experiment)
-        # Read single task from config file
-        elif isinstance(experiment, dict):
-            tasks = pd.DataFrame.from_dict(data=[experiment])
-        else:
-            raise FileNotFoundError(f"{experiment} not found. Please check path in filesystem.")
-
-        return tasks, output_path
-
-
-class XesFileFormatter:
-    """Handles XES file formatting operations."""
-
-    @staticmethod
-    def remove_extra_lines(elem):
-        """Removes extra lines from XML elements."""
-        has_words = re.compile("\\w")
-        for element in elem.iter():
-            if not re.search(has_words, str(element.tail)):
-                element.tail = ""
-            if not re.search(has_words, str(element.text)):
-                element.text = ""
-
-    @staticmethod
-    def add_extension_before_traces(xes_file):
-        """Adds standard extensions to XES files."""
-        # Register the namespace
-        ET.register_namespace('', "http://www.xes-standard.org/")
-
-        # Parse the original XML
-        tree = ET.parse(xes_file)
-        root = tree.getroot()
-
-        # Add extensions
-        extensions = [
-            {'name': 'Lifecycle', 'prefix': 'lifecycle', 'uri': 'http://www.xes-standard.org/lifecycle.xesext'},
-            {'name': 'Time', 'prefix': 'time', 'uri': 'http://www.xes-standard.org/time.xesext'},
-            {'name': 'Concept', 'prefix': 'concept', 'uri': 'http://www.xes-standard.org/concept.xesext'}
+    if file_exists:
+        # Read the existing header to keep column order consistent. Any new
+        # keys are appended at the end of the header list.
+        with open(file_path, newline="", encoding="utf-8") as csvfile:
+            reader = csv.reader(csvfile)
+            try:
+                existing_header: List[str] = next(reader)
+            except StopIteration:
+                existing_header = []
+        header: List[str] = existing_header + [
+            k for k in row.keys() if k not in existing_header
         ]
+    else:
+        header = list(row.keys())
 
-        for ext in extensions:
-            extension_elem = ET.Element('extension', ext)
-            root.insert(0, extension_elem)
+    # Ensure all header fields are present in the row dictionary.
+    for column in header:
+        row.setdefault(column, "")
 
-        # Add global variables
-        globals_config = [
-            {
-                'scope': 'event',
-                'attributes': [
-                    {'key': 'lifecycle:transition', 'value': 'complete'},
-                    {'key': 'concept:name', 'value': '__INVALID__'},
-                    {'key': 'time:timestamp', 'value': '1970-01-01T01:00:00.000+01:00'}
-                ]
-            },
-            {
-                'scope': 'trace',
-                'attributes': [
-                    {'key': 'concept:name', 'value': '__INVALID__'}
-                ]
-            }
-        ]
-
-        for global_var in globals_config:
-            global_elem = ET.Element('global', {'scope': global_var['scope']})
-            for attr in global_var['attributes']:
-                string_elem = ET.SubElement(global_elem, 'string', {'key': attr['key'], 'value': attr['value']})
-            root.insert(len(extensions), global_elem)
-
-        # Pretty print the XES
-        XesFileFormatter.remove_extra_lines(root)
-        xml_str = minidom.parseString(ET.tostring(root)).toprettyxml()
-        with open(xes_file, "w") as f:
-            f.write(xml_str)
-
-
-class SimulationEngine:
-    """Handles simulation of process models."""
-
-    @staticmethod
-    def simulate_ptlg_model(model, num_traces) -> EventLog:
-        """Simulates a model using PTLG approach."""
-        log = play_out(model, parameters={"num_traces": num_traces})
-        for i, trace in enumerate(log):
-            trace.attributes['concept:name'] = str(i)
-            for j, event in enumerate(trace):
-                event['time:timestamp'] = dt.now()
-                event['lifecycle:transition'] = "complete"
-        return log
-
-    @staticmethod
-    def init_defact(queue: Queue, config: ConfigurationSpace, print_events: bool = True) -> Process:
-        """Initializes DEFact simulation process."""
-        process = Process(
-            target=play_DEFact,
-            kwargs={'queue': queue, 'print_events': print_events, "config": config}
-        )
-        process.start()
-        return process
-
-    @staticmethod
-    def terminate_defact(process: Process):
-        """Terminates a DEFact simulation process."""
-        process.terminate()
-        process.join()
-
-    @staticmethod
-    def simulate_defact_model(config: Configuration, window_size: int) -> EventLog:
-        """Simulates a model using DEFact approach."""
-        output_queue = multiprocessing.Queue()
-
-        config_space = None
-        if hasattr(config, 'config_space'):
-            config_space = config.config_space
-        elif isinstance(config, ConfigurationSpace):
-            config_space = config
-        else:
-            config_space = ConfigurationSpace(config)
-
-        process = SimulationEngine.init_defact(output_queue, config_space, print_events=True)
-
-        window = []
-        try:
-            while len(window) < window_size:
-                window.append(output_queue.get())
-            SimulationEngine.terminate_defact(process)
-
-            log = window_to_eventlog(window)
-            return log
-        except Exception as e:
-            SimulationEngine.terminate_defact(process)
-            raise e
-
-
-class GeneratorTask:
-    """Represents a single generation task with objectives and optimization."""
-
-    def __init__(self, task_tuple, config_space, n_trials):
-        """
-        Initialize a generator task.
-
-        Args:
-            task_tuple: Tuple containing task index and series
-            config_space: Configuration space for optimization
-            n_trials: Number of optimization trials
-        """
-        random.seed(RANDOM_SEED)
-
-        try:
-            self.identifier = [x for x in task_tuple[1] if isinstance(x, str)][0]
-        except IndexError:
-            self.identifier = task_tuple[0] + 1
-
-        self.task_series = task_tuple[1].loc[lambda x, identifier=self.identifier: x != identifier]
-
-        # Extract objectives from task parameters
-        self.objectives = {key: 0.0 for key in self.task_series["feature_params"]["feature_set"]}
-        self.config_space = config_space
-        self.n_trials = n_trials
-        self.configs = None
-        self.simulation_method = 'PTLG'  # Default
-
-    def set_simulation_method(self, method: str):
-        """Sets the simulation method."""
-        self.simulation_method = method
-
-    def optimize(self):
-        """Optimizes model parameters to match objectives."""
-        objectives = list(self.objectives.keys())
-
-        # Scenario object for multi-objective optimization
-        scenario = Scenario(
-            self.config_space,
-            deterministic=True,
-            n_trials=4,
-            objectives=objectives,
-            n_workers=-1
-        )
-
-        # Use SMAC for optimization
-        random.seed(RANDOM_SEED)
-        multi_obj = HyperparameterOptimizationFacade.get_multi_objective_algorithm(
-            scenario,
-            objective_weights=[1] * len(self.objectives),
-        )
-
-        random.seed(RANDOM_SEED)
-        smac = HyperparameterOptimizationFacade(
-            scenario=scenario,
-            target_function=self.gen_log,
-            multi_objective_algorithm=multi_obj,
-            logging_level=False,
-            overwrite=True,
-
-        )
-
-        random.seed(RANDOM_SEED)
-        incumbent = smac.optimize()
-        return incumbent
-
-    def gen_log(self, config: Configuration, seed: int = RANDOM_SEED):
-        """Generates a log with the given configuration and evaluates it."""
-        random.seed(RANDOM_SEED)
-        model = create_PTLG(config)
-        log = self.simulate_model(model, config)
-
-        random.seed(RANDOM_SEED)
-        result = self.eval_log(log)
-        return result
-
-    def eval_log(self, log):
-        """Evaluates log against objectives."""
-        random.seed(RANDOM_SEED)
-
-        features = compute_features_from_event_data(self.objectives.keys(), log)
-
-        log_evaluation = {}
-        for key in self.objectives.keys():
-            log_evaluation[key] = abs(self.objectives[key] - features[key])
-        return log_evaluation
-
-    def generate_optimized_log(self, config):
-        """Returns event log from given configuration with features."""
-        model = create_PTLG(config)
-        log = self.simulate_model(model, config)
-
-        random.seed(RANDOM_SEED)
-        features = compute_features_from_event_data(self.objectives.keys(), log)
-        return {
-            "configuration": config,
-            "log": log,
-            "features": features,
-        }
-
-    def simulate_model(self, model, config):
-        """Simulates the model using specified method."""
-        random.seed(RANDOM_SEED)
-
-        if self.simulation_method == 'DEFact':
-            window_size = config.get("num_traces", 20) if hasattr(config, "get") else 20
-            return SimulationEngine.simulate_defact_model(config, window_size)
-
-        elif self.simulation_method == 'PTLG':
-            return SimulationEngine.simulate_ptlg_model(model, config["num_traces"])
-
-        else:
-            raise NotImplementedError(f"Play out method {self.simulation_method} not implemented.")
+    with open(file_path, "a", newline="", encoding="utf-8") as csvfile:
+        writer = csv.DictWriter(csvfile, fieldnames=header)
+        if not file_exists:
+            writer.writeheader()
+        writer.writerow(row)
 
 
 class EventLogGenerator:
     """Main class for generating event logs."""
 
-    def __init__(self, params: Dict[str, Any]):
+    def __init__(self, params: Optional[Dict[str, Any]]):
         """
         Initialize the event log generator.
 
         Args:
-            params: Dictionary containing generation parameters
+            params: Dictionary containing generation parameters. Can be None.
         """
         print("=========================== Generator ==========================")
+        # Set random seed once at initialization
+        random.seed(RANDOM_SEED)
 
-        if params is None or params.get(GENERATOR_PARAMS) is None:
-            default_params = {
-                'generator_params': {
-                    'experiment': {
-                        'ratio_top_20_variants': 0.2,
-                        'epa_normalized_sequence_entropy_linear_forgetting': 0.4
+        self.output_path: str = 'data/generated'
+        self.log_config: Optional[Union[pd.DataFrame, List[Dict[str, Any]]]]
+        self.config_space: ConfigurationSpace
+        self.n_trials: int = 2
+        self.experiment: Optional[Dict[str, float]] = None
+        self.tasks: Optional[pd.DataFrame] = None
+        self.feature_keys: Optional[List[str]] = None
+        self.configs: Optional[List[Dict[str, Any]]] = None
+
+        current_params: Dict[str, Any]
+
+        if params is None:
+            print(
+                f"Warning: Input 'params' is None. Using minimal default structure for parsing."
+            )
+            current_params = {GENERATOR_PARAMS: {}}
+        else:
+            current_params = params
+
+        if current_params.get(GENERATOR_PARAMS) is None:
+            default_params_for_print: Dict[str, Any] = {
+                GENERATOR_PARAMS: {
+                    EXPERIMENT: {
+                        'temporal_dependency': 0, 'case_concurrency': 0.8,
+                        'concept_stability': 0.8, 'case_throughput_stability': 0.8,
+                        'parallel_activity_ratio': 0.8, 'activity_duration_stability': 0.8,
+                        'case_priority_dynamics': 0.8, 'concept_drift': 0.8,
+                        'long_term_dependencies': 0.8
                     },
-                    'config_space': {
+                    CONFIG_SPACE: {
                         'mode': [5, 20], 'sequence': [0.01, 1], 'choice': [0.01, 1],
                         'parallel': [0.01, 1], 'loop': [0.01, 1], 'silent': [0.01, 1],
                         'lt_dependency': [0.01, 1], 'num_traces': [10, 101],
                         'duplicate': [0], 'or': [0]
                     },
-                    'n_trials': 50
+                    N_TRIALS: 50
                 }
             }
-            raise TypeError(
-                f"Missing 'params'. Please provide a dictionary with generator parameters as so: {default_params}. "
-                f"See https://github.com/lmu-dbs/gedi for more info."
+            print(
+                f"Missing '{GENERATOR_PARAMS}' key in 'params'. "
+                f"Please provide a dictionary with generator parameters as so: {default_params_for_print}"
             )
 
-        self.parse_params(params)
-        self.log_config = None
+            if GENERATOR_PARAMS not in current_params:
+                current_params[GENERATOR_PARAMS] = {}
 
-        if hasattr(self, 'output_path') and self.output_path.endswith('csv'):
-            self.log_config = pd.read_csv(self.output_path)
-            return
+        self.parse_params(current_params)
+
+        if self.output_path.endswith('csv'):
+            try:
+                self.log_config = pd.read_csv(self.output_path)
+                print(f"INFO: Successfully loaded log configuration from CSV: {self.output_path}")
+                return  # Skip generation if log_config is loaded from CSV
+            except FileNotFoundError:
+                print(f"INFO: Specified CSV log_config '{self.output_path}' not found. Proceeding with generation.")
+                self.log_config = None  # Ensure it's None to trigger generation
+            except Exception as e:
+                print(f"ERROR: Could not read CSV '{self.output_path}': {e}. Proceeding with generation.")
+                self.log_config = None
 
         self.run_generation()
 
-    def parse_params(self, params: Dict[str, Any]):
-        """Parse input parameters."""
-        # Set output path
-        self.output_path = params.get(OUTPUT_PATH, 'data/generated')
+    def parse_params(self, params: Dict[str, Any]) -> None:
+        """Parse input parameters and set up generator configuration."""
+
+        self.output_path = str(params.get(OUTPUT_PATH, self.output_path))
         if not os.path.exists(self.output_path):
-            os.makedirs(self.output_path, exist_ok=True)
+            try:
+                os.makedirs(self.output_path, exist_ok=True)
+            except OSError as e:
+                print(f"Error creating output directory {self.output_path}: {e}. Using current directory.")
+                self.output_path = "."
 
-        # Get generator parameters
-        generator_params = params.get(GENERATOR_PARAMS, {})
+        generator_params: Dict[str, Any] = params.get(GENERATOR_PARAMS, {})
 
-        # Set simulation method
-        self.simulation_method = generator_params.get(SIMULATION_METHOD, 'PTLG')
-
-        # Set configuration space
-        config_space_dict = generator_params.get(CONFIG_SPACE)
+        config_space_dict: Optional[Dict[str, List[Union[int, float]]]] = generator_params.get(CONFIG_SPACE)
         if config_space_dict is None:
             self.config_space = ConfigurationManager.create_default_config_space()
-            print(f"WARNING: No config_space specified in config file. Continuing with {self.config_space}")
+            print(f"WARNING: No '{CONFIG_SPACE}' specified. Using default: {self.config_space}")
         else:
-            config_tuples = ConfigurationManager.convert_list_params_to_tuples(config_space_dict)
-            self.config_space = ConfigurationSpace(config_tuples)
+            try:
+                config_tuples: Dict[str, Tuple[Union[int, float], Union[int, float]]] = \
+                    ConfigurationManager.convert_list_params_to_tuples(config_space_dict)
+                self.config_space = ConfigurationSpace(config_tuples, seed=RANDOM_SEED)
+            except ValueError as e:
+                print(f"ERROR: Invalid format for '{CONFIG_SPACE}': {e}. Using default config space.")
+                self.config_space = ConfigurationManager.create_default_config_space()
 
-        # Set number of trials
-        self.n_trials = generator_params.get(N_TRIALS, 20)
-        if not generator_params.get(N_TRIALS):
-            print(f"INFO: Running with n_trials={self.n_trials}")
+        self.n_trials = int(generator_params.get(N_TRIALS, self.n_trials))
+        if N_TRIALS not in generator_params:
+            print(f"INFO: Using n_trials={self.n_trials} (default or previously set).")
 
-        # Set experiment
-        self.experiment = generator_params.get(EXPERIMENT)
-        self.tasks = None
+        self.experiment = generator_params.get(EXPERIMENT)  # type: Optional[Dict[str, float]]
 
         if self.experiment is not None:
-            self.tasks, output_path = TaskManager.get_tasks(self.experiment, self.output_path)
-            columns_to_rename = {
-                col: column_mappings()[col]
-                for col in self.tasks.columns if col in column_mappings()
+            tasks_df: pd.DataFrame
+            updated_output_path: str
+            tasks_df, updated_output_path = TaskManager.get_tasks(self.experiment, self.output_path)
+            self.tasks = tasks_df
+
+            map_for_columns: Dict[str, str] = column_mappings()
+            columns_to_rename_dict: Dict[str, str] = {
+                col: map_for_columns[col]
+                for col in self.tasks.columns if col in map_for_columns
             }
-            self.tasks = self.tasks.rename(columns=columns_to_rename)
-            self.output_path = output_path
+            if columns_to_rename_dict:
+                self.tasks = self.tasks.rename(columns=columns_to_rename_dict)
+            self.output_path = updated_output_path
+        else:
+            self.tasks = None
 
-    def run_generation(self):
-        """Run the event log generation process."""
-        random.seed(RANDOM_SEED)
+    def run_generation(self) -> None:
+        """Run the event log generation process based on parsed parameters."""
+        # No need to re-seed random here
 
-        if self.tasks is not None:
+        if self.tasks is not None and not self.tasks.empty:
+
+            task_columns_as_str: List[str] = [str(col) for col in self.tasks.columns.tolist()]
             self.feature_keys = sorted([
-                feature for feature in self.tasks.columns.tolist() if feature != "log"
+                feature_name for feature_name in task_columns_as_str if feature_name != "log"
             ])
 
-            log_configs = []
+            generated_log_configs_list: List[Dict[str, Any]] = []
+            task_idx: Any
+            task_row_data: pd.Series
+            for task_idx, task_row_data in self.tasks.iterrows():
+                printable_task_idx: str = str(task_idx + 1) if isinstance(task_idx, int) else str(task_idx)
+                print(f"INFO: Generating log for task {printable_task_idx}/{len(self.tasks)}...")
+                current_task_tuple: Tuple[int, pd.Series] = (
+                    task_idx if isinstance(task_idx, int) else hash(task_idx),
+                    task_row_data)
 
-            for index, row in self.tasks.iterrows():
-                print(f"INFO: Generating log for task {index + 1}/{len(self.tasks)}...")
-                log_config = self._process_task((index, row))
-                log_configs.append(log_config)
+                processed_log_config: Dict[str, Any] = self._process_task(current_task_tuple)
+                generated_log_configs_list.append(processed_log_config)
 
-            self.log_config = log_configs
-
+            self.log_config = generated_log_configs_list
         else:
-            # Generate one optimized log if no tasks are specified
-            self.configs = self._optimize_single()
+            optimized_single_config_or_list: Union[Dict[str, Any], List[Dict[str, Any]]] = self._optimize_single()
 
-            if not isinstance(self.configs, list):
-                self.configs = [self.configs]
+            if not isinstance(optimized_single_config_or_list, list):
+                self.configs = [optimized_single_config_or_list]
+            else:
+                self.configs = optimized_single_config_or_list
 
-            temp = self._generate_single_log(self.configs[0])
-            self.log_config = [temp]
+            if not self.configs:
+                print("ERROR: Optimization did not return any configuration. Cannot generate log.")
+                self.log_config = []
+                return
 
-            # Handle hotfix for specific experiment parameter
-            if self.experiment and self.experiment.get('ratio_unique_traces_per_trace'):
-                self.experiment['ratio_variants_per_number_of_traces'] = self.experiment.pop(
-                    'ratio_unique_traces_per_trace'
-                )
+            temp_log_item: Dict[str, Any] = self._generate_single_log(self.configs[0])
+            self.log_config = [temp_log_item]
 
-            # Save generated log
-            save_path = get_output_key_value_location(
+            if self.experiment and 'ratio_unique_traces_per_trace' in self.experiment:
+                popped_value: float = self.experiment.pop('ratio_unique_traces_per_trace')
+                self.experiment['ratio_variants_per_number_of_traces'] = popped_value
+
+            output_file_path_prefix: str = get_output_key_value_location(
                 self.experiment, self.output_path, "genEL"
-            ) + ".xes"
+            )
+            final_save_path: str = output_file_path_prefix + ".xes"
 
-            write_xes(temp['log'], save_path)
-            XesFileFormatter.add_extension_before_traces(save_path)
+            actual_log_data_to_write: Any = temp_log_item.get('log')
+            if actual_log_data_to_write is not None:
+                write_xes(actual_log_data_to_write, final_save_path)
+                XesFileFormatter.add_extension_before_traces(final_save_path)
+                print(f"INFO: Single generated log saved to {final_save_path}")
+            else:
+                print(f"WARNING: No log data found in generated item to save for {final_save_path}")
 
-    def _process_task(self, task_tuple):
-        """Process an individual generation task."""
-        task = GeneratorTask(task_tuple, self.config_space, self.n_trials)
-        task.set_simulation_method(self.simulation_method)
+    def _process_task(self, task_tuple: Tuple[int, pd.Series]) -> Dict[str, Any]:
+        """Process an individual generation task: optimize and generate log."""
 
-        random.seed(RANDOM_SEED)
-        task.configs = task.optimize()
+        task_obj: GeneratorTask = GeneratorTask(task_tuple, self.config_space, self.n_trials)
 
-        random.seed(RANDOM_SEED)
-        if isinstance(task.configs, list):
-            log_config = task.generate_optimized_log(task.configs[0])
+        optimized_task_configs: Union[Dict[str, Any], List[Dict[str, Any]]] = task_obj.optimize()
+        task_obj.configs = optimized_task_configs
+
+        log_configuration_result: Dict[str, Any]
+        config_to_use: Dict[str, Any]
+
+        if isinstance(optimized_task_configs, list):
+            if not optimized_task_configs:
+                print(f"Warning: Optimization for task ID {task_obj.identifier} returned an empty list of configs.")
+                return {'log': None, 'features': {'error': 'No config found from optimization'}}
+            config_to_use = optimized_task_configs[0]
         else:
-            log_config = task.generate_optimized_log(task.configs)
+            config_to_use = optimized_task_configs
 
-        identifier = 'genEL' + str(task.identifier)
+        log_configuration_result = task_obj.generate_optimized_log(config_to_use)
 
-        features_to_dump = log_config['features']
-        features_to_dump['target_similarity'] = compute_similarity(task.objectives, features_to_dump)
+        features_dict_to_dump: Dict[str, Any] = log_configuration_result.get('features', {})
+        if not isinstance(features_dict_to_dump, dict):
+            features_dict_to_dump = {}
 
-        return log_config
+        similarity: float = compute_similarity(task_obj.objectives, features_dict_to_dump)
+        features_dict_to_dump['target_similarity'] = similarity
+        log_configuration_result['features'] = features_dict_to_dump
 
-    def _optimize_single(self):
-        """Optimize parameters for a single log."""
-        # Default objectives if none specified
-        objectives = self.experiment or {"ratio_top_20_variants": 0.2}
+        return log_configuration_result
 
-        # Create a temporary task using default objectives
-        task_series = pd.Series({"feature_params": {"feature_set": list(objectives.keys())}})
-        task = GeneratorTask((0, task_series), self.config_space, self.n_trials)
+    def _optimize_single(self) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
+        """Optimize for a single log based on self.experiment as target features."""
+        target_objectives: Dict[str, float]
+        if self.experiment:
+            target_objectives = self.experiment
+        else:
+            print(f"WARNING: No experiment objectives provided to _optimize_single. Defaulting to basic objective.")
+            target_objectives = {"ratio_top_20_variants": 0.2}
 
-        random.seed(RANDOM_SEED)
-        return task.optimize()
+        objectives_series: pd.Series = pd.Series(target_objectives)
+        single_task_obj: GeneratorTask = GeneratorTask((0, objectives_series), self.config_space, self.n_trials)
 
-    def _generate_single_log(self, config):
-        """Generate a single log using the given configuration."""
-        task_series = pd.Series({"feature_params": {"feature_set": list(self.experiment.keys())}})
-        task = GeneratorTask((0, task_series), self.config_space, self.n_trials)
-        task.set_simulation_method(self.simulation_method)
+        incumbent_config: Union[Dict[str, Any], List[Dict[str, Any]]] = single_task_obj.optimize()
+        return incumbent_config
 
-        random.seed(RANDOM_SEED)
-        return task.generate_optimized_log(config)
+    def _generate_single_log(self, config: Dict[str, Any]) -> Dict[str, Any]:
+        """Generate a single log using the given optimized configuration."""
+        feature_set_keys: List[str] = []
+        if self.experiment:
+            feature_set_keys = list(self.experiment.keys())
+        else:
+            print("Warning: self.experiment is None in _generate_single_log. Feature set might be empty.")
+
+        task_data_for_gen: Dict[str, Any] = {
+            "feature_params": {"feature_set": feature_set_keys}
+        }
+
+        task_series_for_gen: pd.Series = pd.Series(task_data_for_gen, name="single_log_generation_task")
+
+        single_gen_task_obj: GeneratorTask = GeneratorTask(
+            (0, task_series_for_gen), self.config_space, self.n_trials
+        )
+
+        generated_log_item: Dict[str, Any] = single_gen_task_obj.generate_optimized_log(config)
+        return generated_log_item
 
 
 class StreamProcessingManager:
@@ -519,13 +357,14 @@ class StreamProcessingManager:
         config_space = ConfigurationSpace(input_params["config_space"])
         initial_process = SimulationEngine.init_defact(output_queue, config_space, print_events)
 
-        all_features = []
+        all_features: list[dict[str, float]] = []
         final_process = initial_process
 
         try:
-            all_features, final_process = StreamProcessingManager.process_windows(
+            features, final_process = StreamProcessingManager.process_windows(
                 input_params, n_windows, output_queue, window_size, initial_process, print_events
             )
+            all_features.extend(features)
         except ValueError as e:
             traceback.print_exc()
             print(f"ERROR: {e}")
@@ -536,9 +375,13 @@ class StreamProcessingManager:
             if final_process.is_alive():
                 SimulationEngine.terminate_defact(final_process)
 
+        # add a sum to each dict
+        for feature in all_features:
+            feature['sum'] = sum(feature.values())
+
         StreamProcessingManager.print_results(all_features)
 
-        print("SUCCESS: All windows processed. Total features extracted:", len(all_features), all_features)
+        print("SUCCESS: All windows processed. Total features extracted:")
         return all_features
 
     @staticmethod
@@ -573,55 +416,394 @@ class StreamProcessingManager:
             process: Process,
             print_events: bool = True
     ) -> Tuple[List[Dict[str, float]], Process]:
-        """Process multiple windows of events."""
-        window = []
-        all_features = []
-        current_process = process
 
-        feature_set = input_params.get(FEATURE_PARAMS, {}).get(FEATURE_SET, [])
+        SimulationEngine.feature_values = input_params["target_features"]
+
+        window: List[Any] = []
+        all_features_results: List[Dict[str, float]] = []
+        current_process: Process = process
+
+        feature_set_to_calculate: List[str] = input_params.get(FEATURE_PARAMS, {}).get(FEATURE_SET, [])
+
+        target_objectives_for_generator: Dict[str, float] = input_params.get("target_features", {})
+        if not target_objectives_for_generator:
+            print(
+                f"[{StreamProcessingManager.__name__}.process_windows] WARNING: No 'target_features' defined in input_params. Optimization targets may be default or incorrect.")
+
+        adaptive_n_trials: int = input_params.get("n_trials_adaptive", 3)
+
+        # Initialize tracking for cumulative errors and moving averages
+        cumulative_errors: Dict[str, float] = {key: 0.0 for key in target_objectives_for_generator.keys()}
+        window_count: int = 0
+        feature_history: List[Dict[str, float]] = []
 
         for window_num in range(1, n_windows + 1):
             print(f"    INFO: Processing window {window_num}/{n_windows}...")
 
+            current_window_events: List[Any] = []
+            try:
+                while len(current_window_events) < window_size:
+                    event_data: Any = output_queue.get(timeout=60 * 5)
+                    current_window_events.append(event_data)
+            except multiprocessing.queues.Empty:
+                if not current_window_events:
+                    print(f"    Skipping window {window_num} due to no events.")
+                    if window_num < n_windows and current_process.is_alive():
+                        SimulationEngine.terminate_defact(current_process)
+                        print(f"    Attempting to re-initialize DEFact with the original config space for next window.")
+                        restart_config_space = input_params.get(CONFIG_SPACE)
+                        if not isinstance(restart_config_space, ConfigurationSpace):
+                            restart_config_space = ConfigurationSpace(restart_config_space)
+                        SimulationEngine.feature_values = {}
+                        current_process = SimulationEngine.init_defact(output_queue, restart_config_space, print_events)
+                    continue
+
+
+
+            if current_process.is_alive():
+                SimulationEngine.terminate_defact(current_process)
+
+            # Calculate features for current window
+            features_this_window: Dict[str, float] = compute_features_from_event_data(feature_set_to_calculate,
+                                                                                      current_window_events)
+
+            # Store features for history
+            feature_history.append(features_this_window.copy())
+            window_count += 1
+
+            # Calculate current errors (target - actual)
+            current_errors: Dict[str, float] = {}
+            for key in target_objectives_for_generator.keys():
+                if key in features_this_window:
+                    error = target_objectives_for_generator[key] - features_this_window[key]
+                    current_errors[key] = error
+                    cumulative_errors[key] += error
+
+            # Calculate corrective target values for next window optimization
+            corrective_targets: Dict[str, float] = {}
+
+            # Feedback control: Use proportional control to correct trajectory
+            for key in target_objectives_for_generator.keys():
+                if key in features_this_window:
+                    target_value = target_objectives_for_generator[key]
+                    actual_value = features_this_window[key]
+                    error = target_value - actual_value
+
+                    # Adaptive gain based on error magnitude
+                    if abs(error) > 0.5:
+                        kp = 1.0  # Strong correction for large errors
+                    elif abs(error) > 0.2:
+                        kp = 0.5  # Medium correction
+                    else:
+                        kp = 0.2  # Gentle correction for small errors
+
+                    corrective_target = target_value + (kp * error)
+                    corrective_target = max(0.0, min(1.0, corrective_target))
+                    corrective_targets[key] = corrective_target
+
+            for key in target_objectives_for_generator.keys():
+                if key in features_this_window:
+                    target_value = target_objectives_for_generator[key]
+                    actual_value = features_this_window[key]
+                    error = target_value - actual_value
+
+                    # Proportional correction: adjust target for next window
+                    # If we're below target, aim higher; if above target, aim lower
+                    corrective_target = target_value + (kp * error)
+
+                    # Clamp corrective targets to reasonable bounds (0 to 1 for most features)
+                    corrective_target = max(0.0, min(1.0, corrective_target))
+                    corrective_targets[key] = corrective_target
+                else:
+                    # If feature not computed, use original target
+                    corrective_targets[key] = target_objectives_for_generator[key]
+
+            # Print diagnostic information
+            print(f"    Window {window_num} Feature Analysis:")
+            print(f"      Target features: {target_objectives_for_generator}")
+            print(f"      Actual features: {features_this_window}")
+            print(f"      Current errors: {current_errors}")
+            print(f"      Corrective targets for next window: {corrective_targets}")
+
+            # Prepare generator parameters with corrective targets
+            generator_call_params: Dict[str, Any] = {
+                GENERATOR_PARAMS: {
+                    SIMULATION_METHOD: "DEFact",
+                    EXPERIMENT: corrective_targets,  # Use corrective targets instead of original targets
+                    CONFIG_SPACE: input_params.get(CONFIG_SPACE),
+                    N_TRIALS: adaptive_n_trials
+                },
+                OUTPUT_PATH: input_params.get(OUTPUT_PATH, os.path.join("output", "stream_processing_temp"))
+            }
+
+            if not input_params.get(CONFIG_SPACE):
+                raise ValueError(f"Missing 'CONFIG_SPACE' in input_params for EventLogGenerator.")
+
+
+            # Clear any previous memory state to avoid interference
+            from gedi_streams.features.memory import ComputedFeatureMemory
+            memory = ComputedFeatureMemory()
+            memory.clear_memory()
+
+            temp_event_log_generator = EventLogGenerator(generator_call_params)
+            if not temp_event_log_generator.log_config or not isinstance(temp_event_log_generator.log_config,
+                                                                         list) or not \
+                    temp_event_log_generator.log_config[0]:
+                raise RuntimeError("EventLogGenerator did not produce a valid log_config.")
+
+            optimized_log_config: Dict[str, Any] = temp_event_log_generator.log_config[0]
+            config_for_next_run: Configuration = optimized_log_config["configuration"]
+
+            if not isinstance(config_for_next_run, Configuration):
+                raise TypeError(
+                    f"Optimized configuration is not a Configuration object. Got {type(config_for_next_run)}")
+
+            print(f"    Optimization successful. Next window will use corrective configuration.")
+
+
+
+            # Initialize next window process with optimized configuration (if not the last window)
+            if window_num < n_windows:
+                current_process = SimulationEngine.init_defact(
+                    output_queue,
+                    config_for_next_run,
+                    print_events
+                )
+
+            all_features_results.append(features_this_window)
+
+            print(
+                f"   SUCCESS: Window {window_num}/{n_windows} processed successfully. ",
+                f"Extracted {len(features_this_window)} features."
+            )
+
+            current_window_events.clear()
+
+        # Print final convergence analysis
+        print(f"\n=== FINAL CONVERGENCE ANALYSIS ===")
+        print(f"Target features: {target_objectives_for_generator}")
+        if all_features_results:
+            final_features = all_features_results[-1]
+            final_errors = {key: abs(target_objectives_for_generator[key] - final_features.get(key, 0))
+                            for key in target_objectives_for_generator.keys()}
+            print(f"Final features: {final_features}")
+            print(f"Final absolute errors: {final_errors}")
+            avg_error = sum(final_errors.values()) / len(final_errors)
+            print(f"Average final error: {avg_error:.4f}")
+
+        return all_features_results, current_process
+
+
+class SimulationEngine:
+    """Handles simulation of process models."""
+
+    feature_values: dict[str, float] = {}
+
+    @staticmethod
+    def simulate_ptlg_model(model, num_traces) -> EventLog:
+        """Simulates a model using PTLG approach."""
+
+        log = play_out(model, parameters={"num_traces": num_traces})
+        for i, trace in enumerate(log):
+            trace.attributes['concept:name'] = str(i)
+            for j, event in enumerate(trace):
+                event['time:timestamp'] = dt.now()
+                event['lifecycle:transition'] = "complete"
+        return log
+
+    @staticmethod
+    def init_defact(queue: Queue, config_to_run: ConfigurationSpace,
+                    print_events: bool = True) -> Process:
+
+        process = Process(
+            target=play_DEFact,
+            kwargs={'queue': queue, 'print_events': print_events, "config": config_to_run, "visualize": False}
+        )
+        process.start()
+        return process
+
+    @staticmethod
+    def terminate_defact(process: Process):
+        """Terminates a DEFact simulation process."""
+        print("TERMINATING DEFACT SIMULATION PROCESS", process.pid)
+        process.terminate()
+        process.join()
+
+    @staticmethod
+    def simulate_defact_model(config: Configuration, window_size: int, model: pm4py.ProcessTree) -> List[Event]:
+        """Simulates a model using DEFact approach."""
+        output_queue = multiprocessing.Queue()
+
+        process = SimulationEngine.init_defact(output_queue, config, print_events=True)
+
+        window = []
+        try:
             while len(window) < window_size:
                 window.append(output_queue.get())
 
-            SimulationEngine.terminate_defact(current_process)
+            SimulationEngine.terminate_defact(process)
 
-            el = window_to_eventlog(window)
+            return window
+        except Exception as e:
+            SimulationEngine.terminate_defact(process)
+            raise e
 
-            input_params['input_path'] = OUTPUT_PATH
+    def calculate_process_discover_metrics(
+            window: List[Event],
+            model: Union[HeuristicsNet, pm4py.ProcessTree],
+            features: dict[str, float] = None
+    ) -> None:
+        """Calculates process discovery metrics for the given log and model."""
+        shuffle(window)
+        for event in window:
+            if event.get("lifecycle:transition") == "start" and "process" not in event.get("lifecycle:transition"):
+                discovery_algorithm(event)
 
-            features_per_window = compute_features_from_event_data(feature_set, el)
+        features_config = SimulationEngine.feature_values
+        models: Dict[str, HeuristicsNet] = get_models()
 
-            params_for_gen = {
-                "generator_params": {
-                    "simulation_method": "DEFact",
-                    "experiment": input_params,
-                    "config_space": input_params["config_space"],
-                },
-                "n_trials": 50
-            }
+        hmlcb_net: HeuristicsNet = models["HeuristicsMinerLossyCountingBudget"]
+        hmlc_net: HeuristicsNet = models["HeuristicsMinerLossyCounting"]
 
-            generator = EventLogGenerator(params_for_gen)
+        hmlcb_pn = pm4py.convert_to_petri_net(hmlcb_net)
+        hmlc_pn = pm4py.convert_to_petri_net(hmlc_net)
 
-            log_config = generator.log_config[0]
+        log_eval: EventLog = pm4py.play_out(model, parameters={"num_traces": 100})
 
-            config = log_config["configuration"]
+        hmlcb_res_fitness: Dict[str, float] = pm4py.fitness_token_based_replay(log_eval, *hmlcb_pn)
+        hmlc_res_fitness: Dict[str, float] = pm4py.fitness_token_based_replay(log_eval, *hmlc_pn)
+        hmlcb_res_precision: float = pm4py.precision_token_based_replay(log_eval, *hmlcb_pn)
+        hmlc_res_precision: float = pm4py.precision_token_based_replay(log_eval, *hmlc_pn)
 
-            # Only create a new process if we're not at the last window
-            if window_num < n_windows:
-                current_process = SimulationEngine.init_defact(
-                    output_queue, config.config_space, print_events
-                )
 
-            all_features.append(features_per_window)
+        conformance_metrics: Dict[str, float] = {
+            "fitness_hmlcb": hmlcb_res_fitness.get("log_fitness", -999),
+            "fitness_hmlc": hmlc_res_fitness.get("log_fitness", -999),
+            "precision_hmlcb": hmlcb_res_precision,
+            "precision_hmlc": hmlc_res_precision
+        }
 
-            print(
-                f"   SUCCESS: Window {window_num}/{n_windows} processed successfully.",
-                f"Extracted {len(features_per_window)} features from stream window"
-            )
+        save_results(conformance_metrics, f"down_stream_task[{features_config}].csv")
 
-            window.clear()
+class GeneratorTask:
+    """Represents a single generation task with objectives and optimization."""
 
-        return all_features, current_process
+    def __init__(self, task_tuple, config_space, n_trials):
+        """
+        Initialize a generator task.
+
+        Args:
+            task_tuple: Tuple containing task index and series
+            config_space: Configuration space for optimization
+            n_trials: Number of optimization trials
+        """
+        # Set random seed once at initialization
+        random.seed(RANDOM_SEED)
+
+        objectives_series: pd.Series = task_tuple[1]
+
+        self.identifier: List[str] = objectives_series.keys().values
+
+        self.objectives: Dict[str, float] = {}
+
+        for key, value in objectives_series.items():
+            if isinstance(value, (int, float)):
+                self.objectives[key] = float(value)
+
+        self.config_space = config_space
+        self.n_trials = n_trials
+        self.configs = None
+
+    def optimize(self) -> Configuration | list[Configuration]:
+        """Optimizes model parameters to match objectives."""
+        # Set random seed once at the beginning of optimization
+        random.seed(RANDOM_SEED)
+
+        objectives = list(self.objectives.keys())
+
+        # Clear memory before optimization to avoid interference
+        from gedi_streams.features.memory import ComputedFeatureMemory
+        memory = ComputedFeatureMemory()
+        memory.clear_memory()
+
+        # Scenario object for multi-objective optimization
+        print(
+            f"INFO: Starting optimization for task {self.identifier} with objectives: {objectives} and trials: {self.n_trials}")
+        scenario = Scenario(
+            self.config_space,
+            deterministic=True,
+            n_trials=self.n_trials,
+            objectives=objectives,
+            n_workers=-1
+        )
+
+        # Use SMAC for optimization
+        multi_obj = HyperparameterOptimizationFacade.get_multi_objective_algorithm(
+            scenario,
+            objective_weights=[1] * len(self.objectives),
+        )
+
+        smac = HyperparameterOptimizationFacade(
+            scenario=scenario,
+            target_function=self.gen_log,
+            multi_objective_algorithm=multi_obj,
+            logging_level=False,
+            overwrite=True,
+        )
+
+        incumbent: Configuration | list[Configuration] = smac.optimize()
+        print("#########################################################")
+        print("#########################################################")
+        print("#########################################################")
+        print(f"INFO: Optimization completed for task {self.identifier}.")
+        print(f"INFO: Best configuration found: {incumbent}")
+        print("#########################################################")
+        print("#########################################################")
+        print("#########################################################")
+        return incumbent
+
+    def gen_log(self, config: Configuration, seed: int = RANDOM_SEED):
+        """Generates a log with the given configuration and evaluates it."""
+        # Clear memory for each evaluation to avoid interference
+        from gedi_streams.features.memory import ComputedFeatureMemory
+        memory = ComputedFeatureMemory()
+        memory.clear_memory()
+
+        model = create_PTLG(config)
+        log = self.simulate_model(model, config)
+
+        result = self.eval_log(log, model)
+        return result
+
+    def eval_log(self, log, model):
+        """Evaluates log against objectives."""
+        features = compute_features_from_event_data(self.objectives.keys(), log)
+        SimulationEngine.calculate_process_discover_metrics(log, model, features)
+        log_evaluation = {}
+        for key in self.objectives.keys():
+            log_evaluation[key] = abs(self.objectives[key] - features[key])
+        return log_evaluation
+
+    def generate_optimized_log(self, config):
+        """Returns event log from given configuration with features."""
+        # Clear memory before generating final log
+        from gedi_streams.features.memory import ComputedFeatureMemory
+        memory = ComputedFeatureMemory()
+        memory.clear_memory()
+
+        model = create_PTLG(config)
+        log = self.simulate_model(model, config)
+
+
+
+        features = compute_features_from_event_data(self.objectives.keys(), log)
+        return {
+            "configuration": config,
+            "log": log,
+            "features": features,
+        }
+
+    def simulate_model(self, model, config):
+        """Simulates the model using specified method."""
+        window_size = 50
+        return SimulationEngine.simulate_defact_model(config, window_size, model)

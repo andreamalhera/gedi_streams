@@ -323,13 +323,13 @@ LOW_TEMPORAL_DEPENDENCY = [
     Event({"concept:name": "B", "time:timestamp": datetime.datetime(2023, 1, 1, 10, 5), "case:concept:name": "C1"}),
 
     Event({"concept:name": "A", "time:timestamp": datetime.datetime(2023, 1, 1, 11, 0), "case:concept:name": "C2"}),
-    Event({"concept:name": "B", "time:timestamp": datetime.datetime(2023, 1, 1, 13, 0), "case:concept:name": "C2"}),
+    Event({"concept:name": "B1", "time:timestamp": datetime.datetime(2023, 1, 1, 13, 0), "case:concept:name": "C2"}),
 
     Event({"concept:name": "A", "time:timestamp": datetime.datetime(2023, 1, 1, 14, 0), "case:concept:name": "C3"}),
-    Event({"concept:name": "B", "time:timestamp": datetime.datetime(2023, 1, 1, 14, 1), "case:concept:name": "C3"}),
+    Event({"concept:name": "B2", "time:timestamp": datetime.datetime(2023, 1, 1, 14, 1), "case:concept:name": "C3"}),
 
     Event({"concept:name": "A", "time:timestamp": datetime.datetime(2023, 1, 1, 15, 0), "case:concept:name": "C4"}),
-    Event({"concept:name": "B", "time:timestamp": datetime.datetime(2023, 1, 1, 17, 0), "case:concept:name": "C4"}),
+    Event({"concept:name": "B3", "time:timestamp": datetime.datetime(2023, 1, 1, 17, 0), "case:concept:name": "C4"}),
 ]
 
 # Timing strongly predicts next activities
@@ -343,17 +343,10 @@ HIGH_TEMPORAL_DEPENDENCY = [
 
     # Medium gap always followed by activity Y
     Event({"concept:name": "B", "time:timestamp": datetime.datetime(2023, 1, 1, 12, 0), "case:concept:name": "C1"}),
-    Event({"concept:name": "Y", "time:timestamp": datetime.datetime(2023, 1, 1, 13, 0), "case:concept:name": "C1"}),
+    Event({"concept:name": "X", "time:timestamp": datetime.datetime(2023, 1, 1, 13, 0), "case:concept:name": "C1"}),
 
     Event({"concept:name": "B", "time:timestamp": datetime.datetime(2023, 1, 1, 14, 0), "case:concept:name": "C2"}),
-    Event({"concept:name": "Y", "time:timestamp": datetime.datetime(2023, 1, 1, 15, 0), "case:concept:name": "C2"}),
-
-    # Long gap always followed by activity Z
-    Event({"concept:name": "C", "time:timestamp": datetime.datetime(2023, 1, 1, 16, 0), "case:concept:name": "C1"}),
-    Event({"concept:name": "Z", "time:timestamp": datetime.datetime(2023, 1, 1, 17, 30), "case:concept:name": "C1"}),
-
-    Event({"concept:name": "C", "time:timestamp": datetime.datetime(2023, 1, 1, 18, 0), "case:concept:name": "C2"}),
-    Event({"concept:name": "Z", "time:timestamp": datetime.datetime(2023, 1, 1, 19, 30), "case:concept:name": "C2"}),
+    Event({"concept:name": "X", "time:timestamp": datetime.datetime(2023, 1, 1, 15, 0), "case:concept:name": "C2"}),
 ]
 
 

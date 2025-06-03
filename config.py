@@ -1,10 +1,11 @@
 import json
+import random
 import warnings
 
 from gedi_streams.utils.param_keys import PIPELINE_STEP, INPUT_PATH, OUTPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_SET, FEATURE_PARAMS
 
-def get_model_params_list(alg_json_file: str) :#-> list[dict]:
+def get_model_params_list(alg_json_file: str) :# -> list[dict]:
     """
     Loads the list of model configurations given from a json file or the default list of dictionary from the code.
     @param alg_json_file: str
@@ -25,8 +26,9 @@ def get_model_params_list(alg_json_file: str) :#-> list[dict]:
             ]
 
 DEFAULT_CONFIG_SPACE = {
-    'mode': [15, 35],
-    'sequence': [0.5, 1],
+    # ... PTLG parameters
+    'mode': [5, 20],
+    'sequence': [0.01, 1],
     'choice': [0.01, 1],
     'parallel': [0],
     'loop': [0.01, 1],
@@ -34,5 +36,10 @@ DEFAULT_CONFIG_SPACE = {
     'lt_dependency': [0.01, 1],
     'num_traces': [10, 101],
     'duplicate': [0],
-    'or': [0]
+    'or': [0],
+    # ... DEF parameters
+    'concurrent_probability': [0.0, 1.0],
+    'activity_duration': [15, 50]
 }
+
+RANDOM_SEED = 42

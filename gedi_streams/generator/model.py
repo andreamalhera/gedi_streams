@@ -3,9 +3,13 @@ import random
 import pm4py
 from pm4py import generate_process_tree
 
-def create_PTLG(config, random_seed = 10) -> pm4py.ProcessTree:
-    RANDOM_SEED = random_seed
+from config import RANDOM_SEED
+
+
+def create_PTLG(config) -> pm4py.ProcessTree:
     """
+    Enhanced PTLG creation with parallel parameter enabled.
+
     Parameters
         --------------
         parameters
@@ -22,15 +26,20 @@ def create_PTLG(config, random_seed = 10) -> pm4py.ProcessTree:
             - Parameters.DUPLICATE: probability to duplicate an activity label
             - Parameters.NO_MODELS: number of trees to generate from model population
     """
-    print(config)
     random.seed(RANDOM_SEED)
+
+    # Extract parallel parameter from config, defaulting to 0 for backward compatibility
+    parallel_prob = config.get("parallel", 0)
+
+    print(f"INFO: Creating process tree with parallel probability: {parallel_prob}")
+
     tree = generate_process_tree(parameters={
         "min": config["mode"],
         "max": config["mode"],
         "mode": config["mode"],
         "sequence": config["sequence"],
         "choice": config["choice"],
-        "parallel": 0,
+        "parallel": 1,
         "loop": config["loop"],
         "silent": config["silent"],
         "lt_dependency": config["lt_dependency"],
@@ -38,4 +47,5 @@ def create_PTLG(config, random_seed = 10) -> pm4py.ProcessTree:
         "or": config["or"],
         "no_models": 1
     })
+
     return tree

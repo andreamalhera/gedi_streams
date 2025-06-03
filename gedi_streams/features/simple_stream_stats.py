@@ -2,10 +2,10 @@ import inspect
 import math
 
 import numpy as np
+from collections import defaultdict
 
 from gedi_streams.features.stream_feature import StreamFeature
 from gedi_streams.features.memory import ComputedFeatureMemory
-from pm4py.objects.log.obj import EventLog
 from scipy import stats
 
 
@@ -30,11 +30,11 @@ class SimpleStreamStats(StreamFeature):
             self.feature_names = feature_names
 
     @classmethod
-    def n_events(self, window: EventLog, memory: ComputedFeatureMemory):
+    def n_events(cls, events: list, memory: ComputedFeatureMemory):
         """
         Calculates the cumulative number of events observed in the stream so far.
 
-        This feature counts the total number of events across all traces in the current window
+        This feature counts the total number of events in the current list
         and adds it to the running total from previous windows if available.
 
         Interpretation: Higher values indicate more events being processed. The growth rate
@@ -44,15 +44,17 @@ class SimpleStreamStats(StreamFeature):
             int: The cumulative count of all events observed so far
         """
         previous_value = memory.get_feature_value('n_events')
-        n_events = sum(len(trace) for trace in window)
-        return n_events + previous_value if previous_value is not None else n_events
+        n_events = len(events)
+        cumulative_count = n_events + previous_value if previous_value is not None else n_events
+        memory.set_feature_value('n_events', cumulative_count)
+        return cumulative_count
 
     @classmethod
-    def n_traces(self, window: EventLog, memory: ComputedFeatureMemory):
+    def n_traces(cls, events: list, memory: ComputedFeatureMemory):
         """
         Calculates the cumulative number of process traces observed in the stream so far.
 
-        This feature counts the number of complete process traces in the current window
+        This feature counts the number of unique case IDs in the current events
         and adds it to the running total from previous windows if available.
 
         Interpretation: This metric tracks case volume over time. Increasing values indicate
@@ -62,11 +64,21 @@ class SimpleStreamStats(StreamFeature):
             int: The cumulative count of all traces observed so far
         """
         previous_value = memory.get_feature_value('n_traces')
-        n_traces = len(window)
-        return len(window) + previous_value if previous_value is not None else len(window)
+
+        # Count unique case IDs
+        case_ids = set()
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_ids.add(case_id)
+
+        n_traces = len(case_ids)
+        cumulative_count = n_traces + previous_value if previous_value is not None else n_traces
+        memory.set_feature_value('n_traces', cumulative_count)
+        return cumulative_count
 
     @classmethod
-    def n_windows(self, window: EventLog, memory: ComputedFeatureMemory):
+    def n_windows(cls, events: list, memory: ComputedFeatureMemory):
         """
         Tracks the number of windows processed so far in the event stream.
 
@@ -80,10 +92,12 @@ class SimpleStreamStats(StreamFeature):
             int: The total number of windows processed so far
         """
         previous_value = memory.get_feature_value('n_windows')
-        return 1 + previous_value if previous_value is not None else 1
+        new_count = 1 + previous_value if previous_value is not None else 1
+        memory.set_feature_value('n_windows', new_count)
+        return new_count
 
     @classmethod
-    def ratio_events_per_window(self, window: EventLog, memory: ComputedFeatureMemory):
+    def ratio_events_per_window(cls, events: list, memory: ComputedFeatureMemory):
         """
         Calculates the average number of events per window across all processed windows.
 
@@ -99,15 +113,16 @@ class SimpleStreamStats(StreamFeature):
         previous_n_events = memory.get_feature_value('n_events')
         previous_n_windows = memory.get_feature_value('n_windows')
 
-        new_n_events = sum(
-            len(trace) for trace in window) + previous_n_events if previous_n_events is not None else sum(
-            len(trace) for trace in window)
+        new_n_events = len(events) + previous_n_events if previous_n_events is not None else len(events)
         new_n_windows = 1 + previous_n_windows if previous_n_windows is not None else 1
+
+        memory.set_feature_value('n_events', new_n_events)
+        memory.set_feature_value('n_windows', new_n_windows)
 
         return new_n_events / new_n_windows
 
     @classmethod
-    def ratio_traces_per_window(self, window: EventLog, memory: ComputedFeatureMemory):
+    def ratio_traces_per_window(cls, events: list, memory: ComputedFeatureMemory):
         """
         Calculates the average number of traces per window across all processed windows.
 
@@ -123,13 +138,23 @@ class SimpleStreamStats(StreamFeature):
         previous_n_traces = memory.get_feature_value('n_traces')
         previous_n_windows = memory.get_feature_value('n_windows')
 
-        new_n_traces = len(window) + previous_n_traces if previous_n_traces is not None else len(window)
+        # Count unique case IDs
+        case_ids = set()
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_ids.add(case_id)
+
+        new_n_traces = len(case_ids) + previous_n_traces if previous_n_traces is not None else len(case_ids)
         new_n_windows = 1 + previous_n_windows if previous_n_windows is not None else 1
+
+        memory.set_feature_value('n_traces', new_n_traces)
+        memory.set_feature_value('n_windows', new_n_windows)
 
         return new_n_traces / new_n_windows
 
     @classmethod
-    def activity_appearance_rate(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def activity_appearance_rate(cls, events: list, memory: ComputedFeatureMemory):
         """
         Measures the rate of new activity types appearing in the event stream.
 
@@ -144,9 +169,16 @@ class SimpleStreamStats(StreamFeature):
             float: Ratio of newly observed activities to the number of traces in the window
         """
         current_activities = set()
-        for trace in window:
-            for event in trace:
-                current_activities.add(event["concept:name"])
+        case_ids = set()
+
+        for event in events:
+            activity = event.get("concept:name")
+            case_id = event.get("case:concept:name", "")
+
+            if activity:
+                current_activities.add(activity)
+            if case_id:
+                case_ids.add(case_id)
 
         previous_activities = memory.get_feature_value('known_activities')
         if previous_activities is None:
@@ -155,10 +187,10 @@ class SimpleStreamStats(StreamFeature):
         new_activities = current_activities - previous_activities
         memory.set_feature_value('known_activities', previous_activities.union(current_activities))
 
-        return len(new_activities) / (len(window) or 1)  # Avoid division by zero
+        return len(new_activities) / (len(case_ids) or 1)  # Avoid division by zero
 
     @classmethod
-    def variant_appearance_rate(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def variant_appearance_rate(cls, events: list, memory: ComputedFeatureMemory):
         """
         Measures the rate of new process variants appearing in the event stream.
 
@@ -173,9 +205,21 @@ class SimpleStreamStats(StreamFeature):
         Returns:
             float: Ratio of newly observed variants to the number of traces in the window
         """
+        # Group events by case and sort by timestamp
+        case_events = defaultdict(list)
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_events[case_id].append(event)
+
+        # Sort events within each case by timestamp
+        for case_id in case_events:
+            case_events[case_id].sort(key=lambda e: e.get("time:timestamp", 0))
+
+        # Create variants
         current_variants = set()
-        for trace in window:
-            variant = tuple(event["concept:name"] for event in trace)
+        for case_event_list in case_events.values():
+            variant = tuple(event.get("concept:name", "") for event in case_event_list)
             current_variants.add(variant)
 
         previous_variants = memory.get_feature_value('known_variants')
@@ -185,10 +229,10 @@ class SimpleStreamStats(StreamFeature):
         new_variants = current_variants - previous_variants
         memory.set_feature_value('known_variants', previous_variants.union(current_variants))
 
-        return len(new_variants) / (len(window) or 1)
+        return len(new_variants) / (len(case_events) or 1)
 
     @classmethod
-    def drift_indicator(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def drift_indicator(cls, events: list, memory: ComputedFeatureMemory):
         """
         Detects distribution changes in process variants that may indicate concept drift.
 
@@ -203,14 +247,25 @@ class SimpleStreamStats(StreamFeature):
         Returns:
             float: Normalized distance measure between 0-1 indicating degree of drift
         """
+        # Group events by case and sort by timestamp
+        case_events = defaultdict(list)
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_events[case_id].append(event)
+
+        # Sort events within each case by timestamp
+        for case_id in case_events:
+            case_events[case_id].sort(key=lambda e: e.get("time:timestamp", 0))
+
         # Get current variant distribution
         current_variants = {}
-        for trace in window:
-            variant = tuple(event["concept:name"] for event in trace)
+        for case_event_list in case_events.values():
+            variant = tuple(event.get("concept:name", "") for event in case_event_list)
             current_variants[variant] = current_variants.get(variant, 0) + 1
 
         # Normalize current distribution
-        total_traces = len(window)
+        total_traces = len(case_events)
         current_dist = {v: count / total_traces for v, count in current_variants.items()} if total_traces > 0 else {}
 
         # Get previous distribution
@@ -233,12 +288,12 @@ class SimpleStreamStats(StreamFeature):
     # === Window-Based Control Flow Features ===
 
     @classmethod
-    def direct_follows_entropy(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def direct_follows_entropy(cls, events: list, memory: ComputedFeatureMemory):
         """
         Measures the entropy (uncertainty) in the direct-follows relations within the process.
 
         This feature calculates the Shannon entropy of direct-follows relations (where one
-        activity is immediately followed by another) within the current window. Higher entropy
+        activity is immediately followed by another) within the current events. Higher entropy
         indicates more variety and uncertainty in the transitions between activities.
 
         Interpretation: Low values suggest a structured process with predictable flows.
@@ -248,15 +303,27 @@ class SimpleStreamStats(StreamFeature):
         Returns:
             float: Entropy value of direct-follows relations, where higher values indicate more complexity
         """
+        # Group events by case and sort by timestamp
+        case_events = defaultdict(list)
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_events[case_id].append(event)
+
+        # Sort events within each case by timestamp
+        for case_id in case_events:
+            case_events[case_id].sort(key=lambda e: e.get("time:timestamp", 0))
+
         df_counts = {}
         total_relations = 0
 
-        for trace in window:
-            for i in range(len(trace) - 1):
-                a = trace[i]["concept:name"]
-                b = trace[i + 1]["concept:name"]
-                df_counts[(a, b)] = df_counts.get((a, b), 0) + 1
-                total_relations += 1
+        for case_event_list in case_events.values():
+            for i in range(len(case_event_list) - 1):
+                a = case_event_list[i].get("concept:name", "")
+                b = case_event_list[i + 1].get("concept:name", "")
+                if a and b:
+                    df_counts[(a, b)] = df_counts.get((a, b), 0) + 1
+                    total_relations += 1
 
         if total_relations == 0:
             return 0.0
@@ -269,12 +336,12 @@ class SimpleStreamStats(StreamFeature):
         return entropy
 
     @classmethod
-    def trace_length_variability(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def trace_length_variability(cls, events: list, memory: ComputedFeatureMemory):
         """
         Measures the variability in process trace lengths using coefficient of variation.
 
         This feature calculates how consistent or variable the lengths of process traces are
-        within the current window. It uses the coefficient of variation (standard deviation
+        within the current events. It uses the coefficient of variation (standard deviation
         divided by mean) to quantify the relative dispersion.
 
         Interpretation: Low values indicate consistent trace lengths, suggesting a standardized
@@ -285,10 +352,17 @@ class SimpleStreamStats(StreamFeature):
         Returns:
             float: Coefficient of variation of trace lengths (standard deviation / mean)
         """
-        if not window:
+        # Group events by case
+        case_events = defaultdict(list)
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_events[case_id].append(event)
+
+        if not case_events:
             return 0.0
 
-        lengths = [len(trace) for trace in window]
+        lengths = [len(case_event_list) for case_event_list in case_events.values()]
         mean_length = sum(lengths) / len(lengths)
 
         if mean_length == 0:
@@ -300,7 +374,7 @@ class SimpleStreamStats(StreamFeature):
         return std_dev / mean_length
 
     @classmethod
-    def concurrent_activities_ratio(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def concurrent_activities_ratio(cls, events: list, memory: ComputedFeatureMemory):
         """
         Estimates the degree of concurrency in the process by analyzing activity relationships.
 
@@ -316,13 +390,25 @@ class SimpleStreamStats(StreamFeature):
         Returns:
             float: Ratio between 0-1 representing the estimated degree of concurrency
         """
+        # Group events by case and sort by timestamp
+        case_events = defaultdict(list)
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_events[case_id].append(event)
+
+        # Sort events within each case by timestamp
+        for case_id in case_events:
+            case_events[case_id].sort(key=lambda e: e.get("time:timestamp", 0))
+
         # Build direct follow relations
         df_relations = set()
-        for trace in window:
-            for i in range(len(trace) - 1):
-                a = trace[i]["concept:name"]
-                b = trace[i + 1]["concept:name"]
-                df_relations.add((a, b))
+        for case_event_list in case_events.values():
+            for i in range(len(case_event_list) - 1):
+                a = case_event_list[i].get("concept:name", "")
+                b = case_event_list[i + 1].get("concept:name", "")
+                if a and b:
+                    df_relations.add((a, b))
 
         # Find potential concurrency by checking if a>b and b>a
         activities = set()
@@ -347,7 +433,7 @@ class SimpleStreamStats(StreamFeature):
     # === Control Flow Complexity Metrics ===
 
     @classmethod
-    def activity_entropy(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def activity_entropy(cls, events: list, memory: ComputedFeatureMemory):
         """
         Measures the entropy (diversity) of activities within the process.
 
@@ -365,9 +451,9 @@ class SimpleStreamStats(StreamFeature):
         activity_counts = {}
         total_events = 0
 
-        for trace in window:
-            for event in trace:
-                act = event["concept:name"]
+        for event in events:
+            act = event.get("concept:name", "")
+            if act:
                 activity_counts[act] = activity_counts.get(act, 0) + 1
                 total_events += 1
 
@@ -382,32 +468,7 @@ class SimpleStreamStats(StreamFeature):
         return entropy
 
     @classmethod
-    def unique_paths_ratio(cls, window: EventLog, memory: ComputedFeatureMemory):
-        """
-        Measures the diversity of execution paths as the ratio of unique variants to total traces.
-
-        This feature calculates how many different execution paths (variants) exist relative
-        to the total number of traces, indicating process variability.
-
-        Interpretation: Values close to 0 indicate a standardized process with few variants.
-        Values approaching 1 indicate high variability where almost every case follows a
-        unique path. Higher values may suggest an unstructured or ad-hoc process.
-
-        Returns:
-            float: Ratio between 0-1 of unique execution paths to total traces
-        """
-        if not window:
-            return 0.0
-
-        unique_paths = set()
-        for trace in window:
-            path = tuple(event["concept:name"] for event in trace)
-            unique_paths.add(path)
-
-        return len(unique_paths) / len(window)
-
-    @classmethod
-    def structured_complexity(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def structured_complexity(cls, events: list, memory: ComputedFeatureMemory):
         """
         Provides a heuristic measure of process complexity based on control flow patterns.
 
@@ -424,21 +485,33 @@ class SimpleStreamStats(StreamFeature):
         """
         # Count activity occurrences
         act_counts = {}
-        for trace in window:
-            for event in trace:
-                act = event["concept:name"]
+        for event in events:
+            act = event.get("concept:name", "")
+            if act:
                 act_counts[act] = act_counts.get(act, 0) + 1
+
+        # Group events by case and sort by timestamp
+        case_events = defaultdict(list)
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_events[case_id].append(event)
+
+        # Sort events within each case by timestamp
+        for case_id in case_events:
+            case_events[case_id].sort(key=lambda e: e.get("time:timestamp", 0))
 
         # Count direct follow relations
         df_relations = {}
         total_relations = 0
 
-        for trace in window:
-            for i in range(len(trace) - 1):
-                a = trace[i]["concept:name"]
-                b = trace[i + 1]["concept:name"]
-                df_relations[(a, b)] = df_relations.get((a, b), 0) + 1
-                total_relations += 1
+        for case_event_list in case_events.values():
+            for i in range(len(case_event_list) - 1):
+                a = case_event_list[i].get("concept:name", "")
+                b = case_event_list[i + 1].get("concept:name", "")
+                if a and b:
+                    df_relations[(a, b)] = df_relations.get((a, b), 0) + 1
+                    total_relations += 1
 
         n_activities = len(act_counts)
         n_relations = len(df_relations)
@@ -455,7 +528,7 @@ class SimpleStreamStats(StreamFeature):
     # === Stream Evolution Metrics ===
 
     @classmethod
-    def long_term_activity_shift(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def long_term_activity_shift(cls, events: list, memory: ComputedFeatureMemory):
         """
         Measures how the activity distribution shifts over the long term using exponential moving averages.
 
@@ -474,9 +547,9 @@ class SimpleStreamStats(StreamFeature):
         current_act_counts = {}
         total_events = 0
 
-        for trace in window:
-            for event in trace:
-                act = event["concept:name"]
+        for event in events:
+            act = event.get("concept:name", "")
+            if act:
                 current_act_counts[act] = current_act_counts.get(act, 0) + 1
                 total_events += 1
 
@@ -516,7 +589,7 @@ class SimpleStreamStats(StreamFeature):
         return distance / 2  # Normalize to [0,1]
 
     @classmethod
-    def variant_stability(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def variant_stability(cls, events: list, memory: ComputedFeatureMemory):
         """
         Measures the stability of dominant process variants over time.
 
@@ -531,9 +604,20 @@ class SimpleStreamStats(StreamFeature):
         Returns:
             float: Stability score between 0-1, where higher values indicate more stable dominant variants
         """
+        # Group events by case and sort by timestamp
+        case_events = defaultdict(list)
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_events[case_id].append(event)
+
+        # Sort events within each case by timestamp
+        for case_id in case_events:
+            case_events[case_id].sort(key=lambda e: e.get("time:timestamp", 0))
+
         current_variants = {}
-        for trace in window:
-            variant = tuple(event["concept:name"] for event in trace)
+        for case_event_list in case_events.values():
+            variant = tuple(event.get("concept:name", "") for event in case_event_list)
             current_variants[variant] = current_variants.get(variant, 0) + 1
 
         # Calculate stability based on previous dominant variants
@@ -547,7 +631,7 @@ class SimpleStreamStats(StreamFeature):
             return 1.0  # Default stability
 
         # Check if previous dominant variants are still prominent
-        total_traces = len(window)
+        total_traces = len(case_events)
         stability = 0.0
 
         if total_traces > 0:
@@ -568,7 +652,7 @@ class SimpleStreamStats(StreamFeature):
     # === Performance Metrics ===
 
     @classmethod
-    def throughput_trend(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def throughput_trend(cls, events: list, memory: ComputedFeatureMemory):
         """
         Measures the trend in process throughput by comparing current and previous event counts.
 
@@ -582,7 +666,7 @@ class SimpleStreamStats(StreamFeature):
         Returns:
             float: Relative change in throughput, where positive values indicate increasing throughput
         """
-        current_events = sum(len(trace) for trace in window)
+        current_events = len(events)
         previous_events = memory.get_feature_value('previous_events')
 
         if previous_events is None:
@@ -595,7 +679,7 @@ class SimpleStreamStats(StreamFeature):
         return trend
 
     @classmethod
-    def cycle_time_variation(cls, window: EventLog, memory: ComputedFeatureMemory):
+    def cycle_time_variation(cls, events: list, memory: ComputedFeatureMemory):
         """
         Measures the consistency of process cycle times using coefficient of variation.
 
@@ -611,12 +695,23 @@ class SimpleStreamStats(StreamFeature):
         Returns:
             float: Coefficient of variation of cycle times, where higher values indicate more variation
         """
+        # Group events by case and sort by timestamp
+        case_events = defaultdict(list)
+        for event in events:
+            case_id = event.get("case:concept:name", "")
+            if case_id:
+                case_events[case_id].append(event)
+
+        # Sort events within each case by timestamp
+        for case_id in case_events:
+            case_events[case_id].sort(key=lambda e: e.get("time:timestamp", 0))
+
         cycle_times = []
 
-        for trace in window:
-            if len(trace) >= 2:  # Need at least start and end events
-                start_time = trace[0].get("time:timestamp")
-                end_time = trace[-1].get("time:timestamp")
+        for case_event_list in case_events.values():
+            if len(case_event_list) >= 2:  # Need at least start and end events
+                start_time = case_event_list[0].get("time:timestamp")
+                end_time = case_event_list[-1].get("time:timestamp")
 
                 if start_time and end_time and isinstance(start_time, (int, float)) and isinstance(end_time,
                                                                                                    (int, float)):

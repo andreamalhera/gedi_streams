@@ -30,9 +30,8 @@ from gedi_streams.utils.io_helpers import list_classes_in_file
 from gedi_streams.utils.param_keys import INPUT_PATH
 from gedi_streams.utils.param_keys.features import FEATURE_PARAMS, FEATURE_SET
 from pathlib import Path
-from pm4py.objects.log.obj import EventLog
+from pm4py.objects.log.obj import EventLog, Event
 from typing import List, Union, Type, Any, Set, Callable, Optional
-from gedi_streams.features.advanced_stream_features import AdvancedStreamFeatures
 
 def inheritors(klass: Type[StreamFeature]) -> Set[Type[StreamFeature]]:
     """
@@ -102,14 +101,8 @@ def get_feature_type(ft_name: str) -> str:
     return ft_type
 
 
-def compute_features_from_event_data(feature_set: List[str], event_data: Union[EventLog, List[EventLog]]):
+def compute_features_from_event_data(feature_set: List[str], event_data: List[Event]):
     feature_memory = ComputedFeatureMemory()
-
-    if isinstance(event_data, list) and all(isinstance(window, EventLog) for window in event_data):
-        feature_memory.clear_memory()
-        for window in event_data:
-            compute_features_from_event_data(feature_set, window)
-        return feature_memory.get_all_features()
 
     features_computation = {}
     for ft_name in feature_set:
@@ -286,9 +279,6 @@ class FeatureExtraction(EventDataFile):
             file_path = os.path.join(self.root_path, file)
             print(f"  INFO: Starting FEEED for {file_path} and {feature_set}")
             features = extract_features(file_path, feature_set)
-            #TODO: Replace hotfix
-            if features.get('ratio_unique_traces_per_trace'):#HOTFIX
-                features['ratio_variants_per_number_of_traces']=features.pop('ratio_unique_traces_per_trace')
 
         except Exception as e:
             print("ERROR: for ",file.rsplit(".", 1)[0], feature_set, "skipping and continuing with next log.")

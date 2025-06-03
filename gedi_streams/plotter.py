@@ -19,9 +19,11 @@ from collections import defaultdict
 
 from sklearn.preprocessing import Normalizer, StandardScaler
 from sklearn.decomposition import PCA
-from gedi_streams.generator.generator import get_tasks
+from gedi_streams.generator.generator import GeneratorTask
 from gedi_streams.utils.io_helpers import get_keys_abbreviation
 from gedi_streams.utils.io_helpers import read_csvs, select_instance
+from utils import function_name
+
 
 def insert_newlines(string, every=140):
     return '\n'.join(string[i:i+every] for i in range(0, len(string), every))
