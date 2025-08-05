@@ -1,0 +1,182 @@
+case:concept:name,concept:name,livecycle:type,time:timestamp,process_id,parent_case_id,correlation_id,attributes
+case_000001,Check_Invoice_01,start,2025-07-28T17:02:47.937322,Micro_Process,,1a46c85d-78b8-41f9-94df-d463e371f80c,"{'temporal_delay_minutes': 4.17, 'concurrent_activities_in_case': 0}"
+case_000001,Check_Invoice_01,complete,2025-07-28T17:08:35.598654,Micro_Process,,7c027e55-ae2d-41f0-9520-7f729fa32780,{'duration_minutes': 5.79}
+case_000001,Report_File_02,start,2025-07-28T17:11:55.666084,Micro_Process,,27f1df3e-e8f7-4082-8b69-73f00ccbbafd,"{'temporal_delay_minutes': 3.33, 'concurrent_activities_in_case': 0}"
+case_000001,Report_File_02,complete,2025-07-28T17:21:17.279370,Micro_Process,,d110d5fa-b3d3-4265-8a25-50a110910bdb,{'duration_minutes': 9.36}
+case_000001,Report_File_02_Option_B,start,2025-07-28T17:23:25.232931,Micro_Process,,5cda3875-ed03-45a4-a4a6-890a3c861b60,"{'temporal_delay_minutes': 2.13, 'concurrent_activities_in_case': 0}"
+case_000001,Report_File_02_Option_B,complete,2025-07-28T17:24:57.024765,Micro_Process,,4a32862b-dc29-41cc-878a-6ffa0da6afa8,{'duration_minutes': 1.53}
+case_000002,Approve_Account_01,start,2025-07-28T17:24:26.158201,Medium_Process,,ebf83b86-aba4-4d14-9c46-f64c93f8b1d6,"{'temporal_delay_minutes': 3.15, 'concurrent_activities_in_case': 0, 'out_of_order': True, 'delivery_delay_minutes': 1.25}"
+case_000001,Report_File_02_Option_A,start,2025-07-28T17:27:17.501830,Micro_Process,,b2ec0606-225f-4bca-96ab-003b83945e6c,"{'temporal_delay_minutes': 6.0, 'concurrent_activities_in_case': 0}"
+case_000001,Report_File_02_Option_A,start,2025-07-28T17:29:06.881550,Micro_Process,,59f42041-9ae6-4981-8b41-5299834e3368,"{'temporal_delay_minutes': 4.16, 'concurrent_activities_in_case': 0}"
+case_000002,Approve_Account_01,complete,2025-07-28T17:31:03.104772,Medium_Process,,6d8bb821-ff3c-4ac3-9a6e-b08007f3dbbc,{'duration_minutes': 5.37}
+case_000002,Execute_Transaction_02,start,2025-07-28T17:32:07.447611,Medium_Process,,f21be38e-ff00-449a-9723-992fa3438521,"{'temporal_delay_minutes': 1.07, 'concurrent_activities_in_case': 0}"
+case_000001,Report_File_02_Option_A,complete,2025-07-28T17:34:48.112216,Micro_Process,,0d9a6434-ce54-4b79-a17e-889525b02ae6,{'duration_minutes': 7.51}
+case_000001,Report_File_02_Option_A,complete,2025-07-28T17:35:18.035841,Micro_Process,,f6cdfa2e-ea32-4b14-83e6-8ae05942ce98,{'duration_minutes': 6.19}
+case_000002,Execute_Transaction_02,complete,2025-07-28T17:36:18.768297,Medium_Process,,28cfe981-2961-447b-b51c-501abc457625,{'duration_minutes': 4.19}
+case_000002,Monitor_Data_03,start,2025-07-28T17:38:06.650999,Medium_Process,,5cf1869e-df3e-43d5-8fe0-ce346bc3bfd9,"{'temporal_delay_minutes': 1.8, 'concurrent_activities_in_case': 0}"
+case_000002,Monitor_Data_03,complete,2025-07-28T17:40:45.734538,Medium_Process,,e07de101-25f6-4fc4-a476-6ff53f7592f5,{'duration_minutes': 2.65}
+case_000002,Submit_Account_04,start,2025-07-28T17:41:36.031777,Medium_Process,,35c94b5f-0798-4b9c-8ec7-82081e107a49,"{'temporal_delay_minutes': 0.84, 'concurrent_activities_in_case': 0}"
+case_000002,Validate_Record_06,start,2025-07-28T17:41:43.699468,Medium_Process,,5bb0233a-b236-478f-80bd-13913472df1b,"{'temporal_delay_minutes': 5.42, 'concurrent_activities_in_case': 0}"
+case_000002,Submit_Account_04,complete,2025-07-28T17:44:43.676702,Medium_Process,,97d7db8b-050c-4949-92b6-922c4ea8bba3,{'duration_minutes': 3.13}
+case_000003,Execute_Order_01,start,2025-07-28T17:45:29.111326,Complex_Process,,11f5bb4e-b166-4823-8b23-ded44c06efa8,"{'temporal_delay_minutes': 0.76, 'concurrent_activities_in_case': 0}"
+case_000002,Update_Item_05,start,2025-07-28T17:45:50.731638,Medium_Process,,541c958b-a0b5-4355-bcfc-3e3b2e29024f,"{'temporal_delay_minutes': 5.08, 'concurrent_activities_in_case': 0}"
+case_000002,Submit_Account_04_Option_A,start,2025-07-28T17:45:58.773104,Medium_Process,,c13456de-205d-47e8-9bdb-60765f4159fa,"{'temporal_delay_minutes': 1.25, 'concurrent_activities_in_case': 1}"
+case_000002,Update_Form_07,start,2025-07-28T17:46:56.963478,Medium_Process,,540b3372-9850-4b86-9e40-a99a24fb4b16,"{'temporal_delay_minutes': 2.22, 'concurrent_activities_in_case': 1}"
+case_000002,Validate_Record_06,start,2025-07-28T17:47:12.178908,Medium_Process,,b27b1b36-087e-43da-934c-32029c2fb3fd,"{'temporal_delay_minutes': 6.44, 'concurrent_activities_in_case': 0}"
+case_000002,Submit_Account_04_Option_B,start,2025-07-28T17:47:39.185061,Medium_Process,,8838af57-b5e8-441b-8d65-4ef891b36cea,"{'temporal_delay_minutes': 2.93, 'concurrent_activities_in_case': 1}"
+case_000002,Submit_Account_04_Option_A,complete,2025-07-28T17:47:42.033295,Medium_Process,,87d0cd5a-b485-448b-8bc1-e754a6314197,{'duration_minutes': 1.72}
+case_000002,Update_Item_05,complete,2025-07-28T17:48:15.745311,Medium_Process,,04a27ece-87b5-401c-9666-7850ddfdaa9a,{'duration_minutes': 2.42}
+case_000002,Update_Item_05_Option_B,start,2025-07-28T17:49:45.001265,Medium_Process,,9f13d953-51f3-411c-b300-45097b4211ea,"{'temporal_delay_minutes': 1.49, 'concurrent_activities_in_case': 3}"
+case_000002,Validate_Record_06,complete,2025-07-28T17:50:19.189011,Medium_Process,,48669463-12e0-48ea-94d6-1c23ea98be0d,{'duration_minutes': 3.12}
+case_000002,Submit_Account_04_Option_C,start,2025-07-28T17:50:25.953319,Medium_Process,,847889d1-7232-44cf-bae7-72236a4d8a15,"{'temporal_delay_minutes': 5.7, 'concurrent_activities_in_case': 1}"
+case_000002,Validate_Record_06,complete,2025-07-28T17:50:30.610681,Medium_Process,,49ffa4c1-1233-4b63-a511-83cc19de0483,{'duration_minutes': 8.78}
+case_000002,Update_Item_05,start,2025-07-28T17:50:56.344457,Medium_Process,,eee157e0-2eb9-4bf2-bd36-a89fe26bcf74,"{'temporal_delay_minutes': 6.21, 'concurrent_activities_in_case': 1}"
+case_000003,Execute_Order_01,complete,2025-07-28T17:51:00.650533,Complex_Process,,5180e873-46a1-4e8a-8280-b0b5ea983d57,{'duration_minutes': 5.53}
+case_000002,Update_Item_05_Option_A,start,2025-07-28T17:51:05.746684,Medium_Process,,6bd76823-9732-4994-a4b9-d3044974145b,"{'temporal_delay_minutes': 2.83, 'concurrent_activities_in_case': 3}"
+case_000002,Update_Item_05_Option_B,complete,2025-07-28T17:51:24.562054,Medium_Process,,53701cc4-d393-4774-ab23-fe2e919bf88d,{'duration_minutes': 1.66}
+case_000002,Update_Item_05_Option_C,start,2025-07-28T17:51:43.407428,Medium_Process,,3a43c002-4cca-4ad5-afe9-dc5844c88d64,"{'temporal_delay_minutes': 3.46, 'concurrent_activities_in_case': 3}"
+case_000002,Submit_Account_04_Option_C,start,2025-07-28T17:51:59.776604,Medium_Process,,31450d9a-f35c-4143-b7c8-4c71e82fa50a,"{'temporal_delay_minutes': 4.3, 'concurrent_activities_in_case': 4}"
+case_000002,Analyze_Profile_08,start,2025-07-28T17:52:54.631816,Medium_Process,,c29d04d6-c3a3-4b2f-b538-2edbe9e2dbe3,"{'temporal_delay_minutes': 1.5, 'concurrent_activities_in_case': 5}"
+case_000002,Update_Form_07,complete,2025-07-28T17:53:18.282435,Medium_Process,,6c22ddd2-43c6-42aa-9989-3eb4c13801b9,{'duration_minutes': 6.36}
+case_000002,Analyze_Profile_08,start,2025-07-28T17:53:32.375592,Medium_Process,,a18abbc3-7908-4cf0-a38d-70dee593755f,"{'temporal_delay_minutes': 3.03, 'concurrent_activities_in_case': 4}"
+case_000002,Create_Item_10,start,2025-07-28T17:54:10.654126,Medium_Process,,97cd53bd-8d85-4219-a972-ec99226e2a70,"{'temporal_delay_minutes': 2.77, 'concurrent_activities_in_case': 5}"
+case_000003,Review_File_02,start,2025-07-28T17:54:28.720177,Complex_Process,,fa845099-71c8-4ad8-a924-7853da2bff19,"{'temporal_delay_minutes': 3.47, 'concurrent_activities_in_case': 0}"
+case_000002,Create_Item_10,start,2025-07-28T17:54:36.186759,Medium_Process,,03dae28c-26e2-4459-9415-31b89e25b91c,"{'temporal_delay_minutes': 6.34, 'concurrent_activities_in_case': 3}"
+case_000002,Create_Item_10,start,2025-07-28T17:54:40.800416,Medium_Process,,1718dd76-212b-4f18-8933-7f8fc67ee588,"{'temporal_delay_minutes': 1.38, 'concurrent_activities_in_case': 6}"
+case_000002,Create_Item_10,start,2025-07-28T17:55:50.661596,Medium_Process,,b8bbd307-337c-4010-a2ce-f7d2ec9d243d,"{'temporal_delay_minutes': 5.33, 'concurrent_activities_in_case': 4}"
+case_000002,Submit_Account_04_Option_B,complete,2025-07-28T17:56:39.940211,Medium_Process,,e492c522-c541-495c-808c-35db43636a20,{'duration_minutes': 9.01}
+case_000003,Review_File_02,complete,2025-07-28T17:56:48.690821,Complex_Process,,1154c5a6-96f4-4c83-8ecd-021e45010139,{'duration_minutes': 2.33}
+case_000002,Update_Item_05_Option_C,complete,2025-07-28T17:55:12.814749,Medium_Process,,576b0e5b-fc3a-4dc5-9958-69d9dec6c230,"{'duration_minutes': 3.49, 'out_of_order': True, 'delivery_delay_minutes': 1.63}"
+case_000002,Submit_Account_04_Option_C,start,2025-07-28T17:57:14.994169,Medium_Process,,49c55f61-a816-48b7-9985-0c638478932d,"{'temporal_delay_minutes': 8.99, 'concurrent_activities_in_case': 3}"
+case_000002,Update_Item_05_Option_A,start,2025-07-28T17:57:28.992947,Medium_Process,,27606ae6-ab0b-4ca2-aeb1-91b318155937,"{'temporal_delay_minutes': 6.97, 'concurrent_activities_in_case': 4}"
+case_000002,Update_Item_05_Option_A,complete,2025-07-28T17:57:32.354791,Medium_Process,,9c9f7711-1a59-415c-8d57-6750764b2870,{'duration_minutes': 6.44}
+case_000002,Update_Item_05_Option_C,start,2025-07-28T17:56:09.391394,Medium_Process,,1fdbdf57-4ec7-432e-b897-7c2266225ceb,"{'temporal_delay_minutes': 5.65, 'concurrent_activities_in_case': 4, 'out_of_order': True, 'delivery_delay_minutes': 1.9}"
+case_000002,Create_Item_10,complete,2025-07-28T17:58:22.646268,Medium_Process,,9435f701-3772-4542-a57f-996c352ab162,{'duration_minutes': 3.77}
+case_000002,Submit_Account_04_Option_C,complete,2025-07-28T17:58:43.817828,Medium_Process,,637ed8f3-9cad-49e0-8f59-432036c288e4,{'duration_minutes': 6.73}
+case_000002,Update_Item_05_Option_C,start,2025-07-28T17:58:54.645052,Medium_Process,,cf8741d7-a2ca-4f7e-84eb-a2512df0b630,"{'temporal_delay_minutes': 7.5, 'concurrent_activities_in_case': 5}"
+case_000002,Submit_Account_04_Option_C,complete,2025-07-28T17:59:21.619973,Medium_Process,,39b83320-8d18-4458-941d-cf0366fe6dbb,{'duration_minutes': 8.93}
+case_000003,Review_Order_03,start,2025-07-28T17:59:53.123723,Complex_Process,,aa0bb2d8-b6ba-4170-ac76-9d0621e2dc84,"{'temporal_delay_minutes': 3.07, 'concurrent_activities_in_case': 0}"
+case_000002,Update_Item_05,complete,2025-07-28T18:00:23.366659,Medium_Process,,01290f7b-a3ca-4972-ac28-8a86a6f8dd32,{'duration_minutes': 9.45}
+case_000002,Analyze_Profile_08,complete,2025-07-28T18:00:34.896507,Medium_Process,,01b9b832-52e7-4c20-b207-1eaf5765e42c,{'duration_minutes': 7.67}
+case_000002,Review_Transaction_11,start,2025-07-28T18:01:25.920615,Medium_Process,,d4826057-06f8-4193-900a-5be4f0f74fe4,"{'temporal_delay_minutes': 2.7, 'concurrent_activities_in_case': 3}"
+case_000002,Analyze_Profile_08,complete,2025-07-28T18:02:40.497021,Medium_Process,,84b7067d-7dfd-4cf3-a00b-6fede3a89837,{'duration_minutes': 9.14}
+case_000002,Create_Item_10,complete,2025-07-28T18:02:41.335437,Medium_Process,,672e77d7-4e3f-4f25-9ba5-c94e2ef56597,{'duration_minutes': 8.51}
+case_000002,Review_Transaction_11,complete,2025-07-28T18:02:46.579502,Medium_Process,,8a4982ec-b260-4335-9652-351328de498e,{'duration_minutes': 1.34}
+case_000002,Create_Item_10,complete,2025-07-28T18:02:50.706461,Medium_Process,,9745cda6-debe-47c1-a5d5-c2226a697c83,{'duration_minutes': 8.17}
+case_000002,Review_Transaction_11,start,2025-07-28T18:03:07.260708,Medium_Process,,1e50524b-da2c-48c8-86ef-ce66c34e6e7a,"{'temporal_delay_minutes': 3.76, 'concurrent_activities_in_case': 3}"
+case_000003,Review_Order_03,complete,2025-07-28T18:03:23.851219,Complex_Process,,d91f1fc9-65a6-439f-bec8-480050eeee51,{'duration_minutes': 3.51}
+case_000002,Check_Invoice_09,start,2025-07-28T18:04:53.841699,Medium_Process,,7c090c6a-2f51-4eca-a13c-2e2f1c8c2c71,"{'temporal_delay_minutes': 2.05, 'concurrent_activities_in_case': 1}"
+case_000002,Check_Invoice_09,start,2025-07-28T18:04:54.702318,Medium_Process,,f8a64421-eddb-47ea-b75d-6f36941adc8c,"{'temporal_delay_minutes': 2.22, 'concurrent_activities_in_case': 2}"
+case_000002,Create_Item_10,complete,2025-07-28T18:04:56.080900,Medium_Process,,feb28a3a-6708-40c5-a5b6-98188f348f54,{'duration_minutes': 9.09}
+case_000003,Analyze_Request_14,start,2025-07-28T18:05:24.910520,Complex_Process,,ec84a263-993a-48a2-afc9-55051f36f17f,"{'temporal_delay_minutes': 2.02, 'concurrent_activities_in_case': 0}"
+case_000002,Review_Transaction_11,start,2025-07-28T18:05:39.310279,Medium_Process,,16ed16b2-7626-43a4-a926-f0496883e94d,"{'temporal_delay_minutes': 7.28, 'concurrent_activities_in_case': 4}"
+case_000002,Update_Item_05_Option_A,complete,2025-07-28T18:05:46.809676,Medium_Process,,e43d98de-a7b8-44b9-bf84-db176bac9037,{'duration_minutes': 8.3}
+case_000002,Submit_Account_04_Option_C,complete,2025-07-28T18:06:01.881245,Medium_Process,,e0cafad7-5efb-48db-a9a6-33ef792a7319,{'duration_minutes': 8.78}
+case_000002,Update_Item_05_Option_C,complete,2025-07-28T18:06:16.755858,Medium_Process,,a3061972-de74-4254-9d8e-e41d5805e1ad,{'duration_minutes': 8.22}
+case_000002,Check_Invoice_09,start,2025-07-28T18:06:19.280017,Medium_Process,,fea60b70-7214-4093-b110-870c74be365d,"{'temporal_delay_minutes': 3.65, 'concurrent_activities_in_case': 2}"
+case_000002,Update_Item_05_Option_C,complete,2025-07-28T18:07:17.734698,Medium_Process,,57fbeb74-68ac-45b2-a178-e3a7f648b56d,{'duration_minutes': 8.38}
+case_000003,Verify_Item_04,start,2025-07-28T18:08:34.741623,Complex_Process,,c63030d8-766d-4d65-b9c0-3c372f29f9e1,"{'temporal_delay_minutes': 5.18, 'concurrent_activities_in_case': 0}"
+case_000002,Check_Invoice_09,complete,2025-07-28T18:08:38.794791,Medium_Process,,5bcecb84-0ad3-47f1-8813-44f1d07be818,{'duration_minutes': 3.73}
+case_000002,Check_Invoice_09,complete,2025-07-28T18:08:38.851157,Medium_Process,,6b1a2beb-7c8f-4438-9d22-d0421cce5bed,{'duration_minutes': 2.33}
+case_000003,Receive_Report_08,start,2025-07-28T18:08:46.855701,Complex_Process,,ea5fe3c7-55f5-4e88-88b1-cafdcdb51e93,"{'temporal_delay_minutes': 5.38, 'concurrent_activities_in_case': 0}"
+case_000002,Check_Invoice_09,start,2025-07-28T18:09:32.902515,Medium_Process,,4fb0981f-5d7f-4872-b00d-3fa2efbf30ef,"{'temporal_delay_minutes': 6.77, 'concurrent_activities_in_case': 1}"
+case_000003,Analyze_Record_05,start,2025-07-28T18:10:07.909934,Complex_Process,,de74cbda-8d5a-4d0f-ba1f-70b0b5871e46,"{'temporal_delay_minutes': 6.73, 'concurrent_activities_in_case': 0}"
+case_000003,Analyze_Request_14,complete,2025-07-28T18:10:23.676812,Complex_Process,,0fabe5f6-6652-4977-a25d-8f821c81347e,{'duration_minutes': 4.98}
+case_000002,Check_Invoice_09,complete,2025-07-28T18:11:00.020443,Medium_Process,,59292a86-42b9-4889-9663-ba770861e9e9,{'duration_minutes': 1.45}
+case_000002,Check_Invoice_09,complete,2025-07-28T18:11:26.219754,Medium_Process,,a466a60e-2cae-42c9-ad2c-8839dd0827fb,{'duration_minutes': 6.54}
+case_000003,Receive_Report_08,complete,2025-07-28T18:11:45.029915,Complex_Process,,b50627e1-fd7f-4426-9e65-45dd1154896b,{'duration_minutes': 2.97}
+case_000002,Review_Transaction_11,complete,2025-07-28T18:12:24.476970,Medium_Process,,7c48c31f-ca51-4535-b3cd-c4df21095488,{'duration_minutes': 9.29}
+case_000002,Review_Transaction_11,complete,2025-07-28T18:12:35.089681,Medium_Process,,7e086e35-d87e-467f-8ed2-575e094b4a3b,{'duration_minutes': 6.93}
+case_000002,Check_Profile_12,start,2025-07-28T18:13:06.905001,Medium_Process,,fb158b31-ccaf-4d78-afc4-4cdb2aee592f,"{'temporal_delay_minutes': 4.47, 'concurrent_activities_in_case': 1}"
+case_000003,Verify_Item_04,complete,2025-07-28T18:13:18.539769,Complex_Process,,81b946ea-0a33-4c13-8edb-2a127cb5492d,{'duration_minutes': 4.73}
+case_000003,Monitor_Report_09,start,2025-07-28T18:14:22.032300,Complex_Process,,c7606c43-d6cd-4e24-bb93-1cb8a586f7ae,"{'temporal_delay_minutes': 1.06, 'concurrent_activities_in_case': 1}"
+case_000002,Check_Profile_12,start,2025-07-28T18:14:23.336562,Medium_Process,,a3aa7652-f9a6-462b-815e-61df0d5ea3bf,"{'temporal_delay_minutes': 5.74, 'concurrent_activities_in_case': 1}"
+case_000002,Check_Profile_12,start,2025-07-28T18:14:37.111272,Medium_Process,,870990c4-e773-4a62-80bd-82333125b9b5,"{'temporal_delay_minutes': 2.03, 'concurrent_activities_in_case': 0}"
+case_000003,Analyze_Request_14_Option_A,start,2025-07-28T18:14:39.188427,Complex_Process,,e7e49858-889c-4806-88c6-a5b1c2a2beda,"{'temporal_delay_minutes': 2.9, 'concurrent_activities_in_case': 2}"
+case_000002,Check_Profile_12,start,2025-07-28T18:14:40.916234,Medium_Process,,edeb33ab-8496-47c5-9c7a-0da61d4481f5,"{'temporal_delay_minutes': 2.27, 'concurrent_activities_in_case': 0}"
+case_000003,Analyze_Record_05,complete,2025-07-28T18:15:14.399320,Complex_Process,,1d3f213c-8996-42c8-8080-7b1f40b824c7,{'duration_minutes': 5.11}
+case_000003,Analyze_Request_14_Option_A,complete,2025-07-28T18:15:54.861830,Complex_Process,,38794fc0-3ea2-491e-a90a-225ac6e7e4bf,{'duration_minutes': 1.26}
+case_000002,Check_Profile_12,start,2025-07-28T18:15:55.969683,Medium_Process,,ff9032a5-f001-4a59-9565-2610cf8a7c20,"{'temporal_delay_minutes': 4.93, 'concurrent_activities_in_case': 1}"
+case_000002,Check_Profile_12,complete,2025-07-28T18:17:10.604788,Medium_Process,,7a3b76ce-94a0-4104-9dfe-b9563024e7ef,{'duration_minutes': 1.24}
+case_000002,Check_Profile_12,start,2025-07-28T18:17:25.584722,Medium_Process,,eb40ea49-c21c-4dde-ae70-fbbc883ffadd,"{'temporal_delay_minutes': 5.99, 'concurrent_activities_in_case': 1}"
+case_000003,Analyze_Request_14_Option_B,start,2025-07-28T18:17:43.629655,Complex_Process,,9b2fcb91-4682-45e1-bdfe-50b3014002b1,"{'temporal_delay_minutes': 5.98, 'concurrent_activities_in_case': 2}"
+case_000002,Check_Profile_12,complete,2025-07-28T18:17:50.933665,Medium_Process,,f6d9d370-9204-4c95-9292-76b5131849f2,{'duration_minutes': 4.73}
+case_000003,Monitor_Report_09,complete,2025-07-28T18:18:03.283132,Complex_Process,,513c586a-a332-4287-b153-936caedf21a7,{'duration_minutes': 3.69}
+case_000003,Analyze_Request_14_Option_C,start,2025-07-28T18:18:51.215366,Complex_Process,,7bd8093a-8c24-4386-bb6b-89038698e23b,"{'temporal_delay_minutes': 7.1, 'concurrent_activities_in_case': 2}"
+case_000003,Analyze_Request_14_Option_B,start,2025-07-28T18:18:52.325278,Complex_Process,,395bab42-f58d-4650-b2ca-785e15846664,"{'temporal_delay_minutes': 5.56, 'concurrent_activities_in_case': 1}"
+case_000004,Check_Invoice_01,start,2025-07-28T18:19:08.990008,Micro_Process,,b0623cd3-0d60-4971-baf0-769580041c1a,"{'temporal_delay_minutes': 1.97, 'concurrent_activities_in_case': 0}"
+case_000003,Send_Profile_11,start,2025-07-28T18:19:22.596738,Complex_Process,,536b7723-d474-4edd-a8a6-89292334b4ef,"{'temporal_delay_minutes': 1.32, 'concurrent_activities_in_case': 1}"
+case_000003,Analyze_Request_14_Option_C,start,2025-07-28T18:20:26.660514,Complex_Process,,26e41a0f-f589-4022-afce-2ac163b64e12,"{'temporal_delay_minutes': 7.14, 'concurrent_activities_in_case': 1}"
+case_000003,Execute_Item_10,start,2025-07-28T18:20:46.255105,Complex_Process,,8ac4fae8-e3f6-4a48-bdb3-2acc8377bc01,"{'temporal_delay_minutes': 2.72, 'concurrent_activities_in_case': 1}"
+case_000003,Analyze_Request_14_Option_A,start,2025-07-28T18:20:57.324877,Complex_Process,,5772c94e-08d0-4d94-9fd7-682882ca47f6,"{'temporal_delay_minutes': 7.65, 'concurrent_activities_in_case': 1}"
+case_000003,Analyze_Request_14_Option_B,complete,2025-07-28T18:21:13.888227,Complex_Process,,1efca22a-8bf0-465e-bdff-46d463990cd0,{'duration_minutes': 3.5}
+case_000003,Analyze_Request_14_Option_C,complete,2025-07-28T18:21:38.870134,Complex_Process,,cbececc3-fba7-42b8-97c8-1372925ff427,{'duration_minutes': 2.79}
+case_000002,Check_Profile_12,complete,2025-07-28T18:22:11.974178,Medium_Process,,24792978-c9cb-4957-98f2-db31b17a9655,{'duration_minutes': 7.52}
+case_000003,Update_Record_06,start,2025-07-28T18:22:45.852254,Complex_Process,,31d25704-a5b6-4d11-90ea-e9bd12c3bdcd,"{'temporal_delay_minutes': 4.71, 'concurrent_activities_in_case': 1}"
+case_000002,Check_Profile_12,complete,2025-07-28T18:22:54.630044,Medium_Process,,00c0a07d-9ccc-491b-9b66-9bb1944f9040,{'duration_minutes': 8.52}
+case_000003,Analyze_Request_14_Option_C,complete,2025-07-28T18:22:55.094051,Complex_Process,,16f56ac3-9eaa-4f94-ba06-6c3f03d17018,{'duration_minutes': 2.47}
+case_000002,Check_Profile_12,complete,2025-07-28T18:23:41.929400,Medium_Process,,f1b7f9f3-0084-4c4a-81ab-7215ab4bce8f,{'duration_minutes': 9.08}
+case_000003,Analyze_Request_14_Option_A,complete,2025-07-28T18:23:44.422957,Complex_Process,,df56b038-9134-4911-875e-5589ae8d6d97,{'duration_minutes': 2.78}
+case_000003,Analyze_Request_14_Option_B,complete,2025-07-28T18:24:08.048251,Complex_Process,,b5c4e6be-420e-4a5b-9390-3e9d851d6e8d,{'duration_minutes': 5.26}
+case_000004,Check_Invoice_01,complete,2025-07-28T18:24:20.108359,Micro_Process,,44a7aad4-c31f-43cc-824c-404815a0471c,{'duration_minutes': 5.19}
+case_000003,Send_Profile_11,complete,2025-07-28T18:25:50.510385,Complex_Process,,fc98a905-b258-44c7-bc90-8c941dc33fec,{'duration_minutes': 6.47}
+case_000003,Analyze_Request_14_Option_C,start,2025-07-28T18:26:42.523935,Complex_Process,,274649be-2c28-4d67-be8f-160e67b8a515,"{'temporal_delay_minutes': 8.65, 'concurrent_activities_in_case': 1}"
+case_000003,Execute_Item_10,complete,2025-07-28T18:26:57.185338,Complex_Process,,451cd467-a126-40d4-b947-a98b6c15600a,{'duration_minutes': 6.18}
+case_000003,Update_Record_06,complete,2025-07-28T18:27:37.176381,Complex_Process,,0f9ae7a6-76be-4346-86b1-270c99729217,{'duration_minutes': 4.86}
+case_000003,Update_Record_06,start,2025-07-28T18:27:46.724026,Complex_Process,,bec777c1-f059-4f06-8c0f-e7e6e50c7af2,"{'temporal_delay_minutes': 6.55, 'concurrent_activities_in_case': 4}"
+case_000004,Report_File_02,start,2025-07-28T18:28:36.437426,Micro_Process,,6f539399-daee-4fa6-a36d-ee58f96f7bb8,"{'temporal_delay_minutes': 4.27, 'concurrent_activities_in_case': 0}"
+case_000003,Update_Record_06,start,2025-07-28T18:28:59.836561,Complex_Process,,5fe5839c-cb5b-443e-9b5f-fd606901ab99,"{'temporal_delay_minutes': 7.35, 'concurrent_activities_in_case': 3}"
+case_000003,Validate_Message_13,start,2025-07-28T18:29:50.495990,Complex_Process,,bb58faad-6607-410d-9e10-8974bd35d6fa,"{'temporal_delay_minutes': 2.89, 'concurrent_activities_in_case': 2}"
+case_000003,Execute_Item_10_Option_B,start,2025-07-28T18:30:04.029803,Complex_Process,,aa03ebd7-f85c-40bc-85c4-c017e868a93b,"{'temporal_delay_minutes': 2.45, 'concurrent_activities_in_case': 1}"
+case_000003,Create_File_12,start,2025-07-28T18:30:06.744467,Complex_Process,,1f9f95f6-b9c3-43bc-b053-d8fd8c8c11c6,"{'temporal_delay_minutes': 3.16, 'concurrent_activities_in_case': 2}"
+case_000003,Transform_Profile_07,start,2025-07-28T18:30:36.735652,Complex_Process,,d852ae22-9f1b-42cc-a11f-c0059df6f889,"{'temporal_delay_minutes': 2.99, 'concurrent_activities_in_case': 1}"
+case_000004,Report_File_02,complete,2025-07-28T18:33:38.451683,Micro_Process,,d13a9104-88b3-41ed-950f-314f93369d99,"{'duration_minutes': 5.03, 'out_of_order': True, 'delivery_delay_minutes': -1.23}"
+case_000003,Execute_Item_10_Option_A,start,2025-07-28T18:32:28.125648,Complex_Process,,eda58938-018a-496b-a1bb-842334b817c7,"{'temporal_delay_minutes': 4.85, 'concurrent_activities_in_case': 1}"
+case_000003,Update_Record_06,complete,2025-07-28T18:32:45.187817,Complex_Process,,01823709-428c-4dad-84b9-0384d99746b1,{'duration_minutes': 3.76}
+case_000003,Create_File_12,start,2025-07-28T18:33:01.290821,Complex_Process,,6215d2d8-032a-46b3-8b04-271f0b4002c3,"{'temporal_delay_minutes': 5.4, 'concurrent_activities_in_case': 1}"
+case_000003,Execute_Item_10_Option_A,start,2025-07-28T18:33:15.924935,Complex_Process,,a4712c1a-20ef-40d8-a3c3-315aa8ea06c1,"{'temporal_delay_minutes': 6.31, 'concurrent_activities_in_case': 2}"
+case_000003,Transform_Profile_07,complete,2025-07-28T18:33:20.167777,Complex_Process,,d4179a7f-858e-444e-bce8-bf4774407121,{'duration_minutes': 2.72}
+case_000003,Validate_Message_13,start,2025-07-28T18:33:20.907715,Complex_Process,,3c829528-8e12-4e83-a60d-e8b07960d2fa,"{'temporal_delay_minutes': 5.73, 'concurrent_activities_in_case': 1}"
+case_000003,Create_File_12,complete,2025-07-28T18:34:56.688150,Complex_Process,,15ff33b8-2df8-403a-9b53-f1eb50243f40,"{'duration_minutes': 1.92, 'out_of_order': True, 'delivery_delay_minutes': -1.29}"
+case_000003,Execute_Item_10_Option_B,start,2025-07-28T18:33:55.916811,Complex_Process,,d295c543-b005-4ff0-8875-1f8ad7abb131,"{'temporal_delay_minutes': 6.98, 'concurrent_activities_in_case': 2}"
+case_000003,Validate_Message_13,complete,2025-07-28T18:33:56.124983,Complex_Process,,d1a576ef-e9fb-4dc8-9fbb-7bf6c2e8526c,{'duration_minutes': 4.09}
+case_000004,Report_File_02_Option_B,start,2025-07-28T18:34:49.558732,Micro_Process,,085c1e8f-b3c3-42bb-a46b-0c8060284287,"{'temporal_delay_minutes': 2.42, 'concurrent_activities_in_case': 0}"
+case_000003,Update_Record_06,complete,2025-07-28T18:35:36.132939,Complex_Process,,99a2f552-d90c-4dc3-b844-412042662e50,{'duration_minutes': 7.82}
+case_000003,Execute_Item_10_Option_B,complete,2025-07-28T18:35:41.914502,Complex_Process,,1807935c-4ed1-4dd9-9bed-374e3c8b4b20,{'duration_minutes': 1.77}
+case_000003,Execute_Item_10_Option_A,complete,2025-07-28T18:35:55.481317,Complex_Process,,e7229b3e-496d-45a0-989b-d8e6deb784e2,{'duration_minutes': 2.66}
+case_000003,Execute_Item_10_Option_A,complete,2025-07-28T18:35:56.253764,Complex_Process,,e3a3c95c-95ef-4b53-a741-e79d17a03c35,{'duration_minutes': 3.47}
+case_000003,Analyze_Request_14_Option_C,complete,2025-07-28T18:35:59.117470,Complex_Process,,12131fe7-062b-497e-b036-8814e0767f2f,{'duration_minutes': 9.28}
+case_000003,Check_Report_15,start,2025-07-28T18:37:18.692488,Complex_Process,,86ba6ee1-bf49-46ac-83de-1448f2fb88c1,"{'temporal_delay_minutes': 1.37, 'concurrent_activities_in_case': 1, 'out_of_order': True, 'delivery_delay_minutes': -0.3}"
+case_000003,Execute_Item_10_Option_B,complete,2025-07-28T18:37:23.571472,Complex_Process,,9a74f617-8e96-4a77-95b8-dc463faa5266,{'duration_minutes': 7.33}
+case_000003,Create_File_12,complete,2025-07-28T18:37:36.238006,Complex_Process,,768e64e3-e155-483b-8999-85a2221c7b74,{'duration_minutes': 7.49}
+case_000003,Validate_Message_13,complete,2025-07-28T18:37:57.289734,Complex_Process,,4ed5211c-ea28-4258-901b-030ef876e94b,{'duration_minutes': 4.61}
+case_000003,Check_Report_15,start,2025-07-28T18:38:30.815147,Complex_Process,,6e4185a1-0306-4348-9dd0-1c3dd111173b,"{'temporal_delay_minutes': 2.53, 'concurrent_activities_in_case': 0}"
+case_000003,Check_Report_15,start,2025-07-28T18:38:32.039562,Complex_Process,,39114263-1347-40a3-be42-c8607324bc79,"{'temporal_delay_minutes': 2.61, 'concurrent_activities_in_case': 1}"
+case_000003,Check_Report_15,complete,2025-07-28T18:38:39.310892,Complex_Process,,4442cea0-3e20-4976-91d4-f32158c5a927,{'duration_minutes': 1.64}
+case_000004,Report_File_02_Option_A,start,2025-07-28T18:38:53.430481,Micro_Process,,a2d7f83a-a090-43cb-b125-df6b599bfb6f,"{'temporal_delay_minutes': 6.48, 'concurrent_activities_in_case': 0}"
+case_000003,Check_Report_15,start,2025-07-28T18:39:09.289950,Complex_Process,,5b6a80d4-4376-4c8d-8aa6-7e0ff9ee876a,"{'temporal_delay_minutes': 5.22, 'concurrent_activities_in_case': 3}"
+case_000004,Report_File_02_Option_B,complete,2025-07-28T18:39:52.836543,Micro_Process,,7e7ae189-7edd-473d-bdcb-0c31b6218e12,{'duration_minutes': 5.05}
+case_000003,Check_Report_15,start,2025-07-28T18:41:32.195125,Complex_Process,,5d8621be-3e6c-4f85-a0f1-59c1af2fab5f,"{'temporal_delay_minutes': 5.84, 'concurrent_activities_in_case': 2}"
+case_000003,Check_Report_15_Option_C,start,2025-07-28T18:42:48.930032,Complex_Process,,f6c43dea-464f-4f8f-a684-3fd754d9c78d,"{'temporal_delay_minutes': 4.16, 'concurrent_activities_in_case': 0}"
+case_000003,Check_Report_15_Option_B,start,2025-07-28T18:43:21.098106,Complex_Process,,e2aeecc3-7da7-461c-97f2-35a13f554ab0,"{'temporal_delay_minutes': 4.7, 'concurrent_activities_in_case': 0}"
+case_000003,Check_Report_15_Option_A,start,2025-07-28T18:43:55.741931,Complex_Process,,6f17b28c-18d4-4b3c-a257-4c8c123e5ed5,"{'temporal_delay_minutes': 5.27, 'concurrent_activities_in_case': 0}"
+case_000003,Check_Report_15_Option_B,complete,2025-07-28T18:45:59.102246,Complex_Process,,f8f5af35-5b65-483b-acf6-fa6bad8ed0ab,{'duration_minutes': 2.63}
+case_000004,Report_File_02_Option_A,complete,2025-07-28T18:46:30.078800,Micro_Process,,b4e39f3c-9d5d-4410-934e-0412e63a160a,{'duration_minutes': 7.61}
+case_000003,Check_Report_15,complete,2025-07-28T18:46:40.058988,Complex_Process,,6d2f189b-3220-47ed-aee3-286994a726d4,{'duration_minutes': 8.13}
+case_000003,Check_Report_15,complete,2025-07-28T18:47:41.357327,Complex_Process,,a6f56b07-fe69-466b-9816-fb40ef9d4b9f,{'duration_minutes': 9.18}
+case_000003,Check_Report_15_Option_C,complete,2025-07-28T18:48:03.000477,Complex_Process,,001610a5-e609-4a76-9fff-b867f10eb359,{'duration_minutes': 5.23}
+case_000005,Process_Item_01,start,2025-07-28T18:48:34.978620,Simple_Process,,d6f0c632-4631-461f-9b9f-89142382e975,"{'temporal_delay_minutes': 1.92, 'concurrent_activities_in_case': 0}"
+case_000003,Check_Report_15,complete,2025-07-28T18:48:35.227181,Complex_Process,,94f50f2c-7cb6-4d18-9c70-f4f4ca3628e9,{'duration_minutes': 7.05}
+case_000003,Check_Report_15,complete,2025-07-28T18:48:48.721945,Complex_Process,,9c7795f3-1a09-46f3-939c-18119b29cedf,{'duration_minutes': 9.66}
+case_000005,Process_Item_01,complete,2025-07-28T18:50:04.248826,Simple_Process,,42ea5873-c95f-415a-a681-250d4fc15913,{'duration_minutes': 1.49}
+case_000003,Check_Report_15_Option_A,complete,2025-07-28T18:53:39.031758,Complex_Process,,b9406bc2-b557-4698-b461-3f749d6e06c7,{'duration_minutes': 9.72}
+case_000005,Execute_File_02,start,2025-07-28T18:53:56.371803,Simple_Process,,b2b1495a-e177-41f6-996c-621b691dd1fa,"{'temporal_delay_minutes': 3.87, 'concurrent_activities_in_case': 0}"
+case_000005,Validate_Form_03,start,2025-07-28T18:54:21.352807,Simple_Process,,5ec30aa8-942c-4a3a-98fd-510afc8e992d,"{'temporal_delay_minutes': 4.29, 'concurrent_activities_in_case': 0}"
+case_000005,Execute_File_02,complete,2025-07-28T18:55:57.640807,Simple_Process,,c2df5f7b-0995-4fff-be78-d9eaeea42a4f,{'duration_minutes': 2.02}
+case_000005,Validate_Form_03,complete,2025-07-28T18:59:56.143695,Simple_Process,,bd5738de-9af8-4361-9ee5-168b19ea7bc1,{'duration_minutes': 5.58}
+case_000005,Analyze_Account_04,start,2025-07-28T19:04:03.636755,Simple_Process,,23fe73c0-8ab9-4589-a7dd-3557399ad6a3,"{'temporal_delay_minutes': 4.12, 'concurrent_activities_in_case': 0}"
+case_000005,Analyze_Account_04,complete,2025-07-28T19:08:07.169386,Simple_Process,,f73fb622-d9a7-4b42-97a3-c7c0384160f2,{'duration_minutes': 4.06}
+case_000005,Analyze_Account_04_Option_B,start,2025-07-28T19:12:14.100572,Simple_Process,,15e73f60-b4c6-43ed-ab3d-2d0fcb9e3d0d,"{'temporal_delay_minutes': 4.12, 'concurrent_activities_in_case': 0}"
+case_000005,Analyze_Account_04_Option_A,start,2025-07-28T19:13:48.591151,Simple_Process,,c8d5145c-9225-4554-8ebb-424a75fb808b,"{'temporal_delay_minutes': 5.69, 'concurrent_activities_in_case': 0}"
+case_000005,Analyze_Account_04_Option_B,complete,2025-07-28T19:17:19.986665,Simple_Process,,4485f15d-8abb-4943-a4f6-557da586a382,{'duration_minutes': 5.1}
+case_000005,Analyze_Account_04_Option_A,complete,2025-07-28T19:18:15.395409,Simple_Process,,f7fc0781-1260-43d7-b963-4eda265900ff,{'duration_minutes': 4.45}

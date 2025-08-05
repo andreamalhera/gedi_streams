@@ -37,39 +37,14 @@ def custom_print(*args, **kwargs ):
 
 builtins.print = custom_print
 
-stream_features = [
-    "activity_appearance_rate",
-    "unique_paths_ratio",
-]
-
-baseline_features = [
-    'temporal_dependency',
-    'parallel_activity_ratio',
-    'long_term_dependencies',
-]
-
-optimized_features = [
-    "process_complexity",
-    "choice_diversity",
-    "loop_intensity",
-    "sequence_predictability",
-    "concurrent_execution_rate",
-    "resource_utilization_pattern",
-    "trace_diversity",
-    "activity_frequency_balance",
-    "trace_length_consistency",
-    "activity_count_ratio",
-    "case_activity_ratio",
-    "long_term_dependency_strength"
-]
 TEST = [
-    "activity_count_ratio",
-    "trace_count_measure",
-    "loop_repetition_ratio",
-    "long_range_dependency_measure",
-    "choice_branching_factor",
-    "trace_length_uniformity"
-    ]
+    "long_term_dependencies",
+    "non_linear_dependencies",
+    "out_of_order_events",
+    "fractal_self_similar_behavior",
+    "temporal_dependencies"
+]
+
 if __name__=='__main__':
     PRINT_EVENTS = True
     N_WINDOWS = 1
@@ -84,12 +59,11 @@ if __name__=='__main__':
     #     "temporal_dependency": 0.8,
     # }
     target_feature_values = {
-        "activity_count_ratio": 0.0,  # Based on your 14 activities
-        "trace_count_measure": 0.0,  # Based on your 10 traces
-        "loop_repetition_ratio": 0.0,  # Based on your loop patterns
-        "long_range_dependency_measure": 0.0,
-        "choice_branching_factor": 0.0,
-        "trace_length_uniformity": 0.0,
+        "long_term_dependencies": 1.0,
+        "non_linear_dependencies": 1.0,
+        "out_of_order_events": 1.0,
+        "fractal_self_similar_behavior": 1.0,
+        "temporal_dependencies": 1.0,
     }
 
     INPUT_PARAMS: dict = {

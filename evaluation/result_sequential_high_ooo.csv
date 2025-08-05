@@ -1,0 +1,23 @@
+case:concept:name,concept:name,livecycle:type,time:timestamp,process_id,parent_case_id,correlation_id,attributes
+case_000001,Check_Invoice_01,start,2025-07-28T17:02:47.939892,Micro_Process,,e9571ad3-db01-46c1-8024-c7212fd60a9f,"{'temporal_delay_minutes': 4.17, 'concurrent_activities_in_case': 0}"
+case_000001,Check_Invoice_01,complete,2025-07-28T17:08:35.601224,Micro_Process,,aa951141-b6c7-47e8-a9a4-6c7b461e1c85,"{'duration_minutes': 5.79, 'out_of_order': True, 'delivery_delay_minutes': 8.63}"
+case_000001,Report_File_02,start,2025-07-28T17:20:34.725462,Micro_Process,,50733492-d18f-4150-88fb-01e9e0c1f629,"{'temporal_delay_minutes': 3.36, 'concurrent_activities_in_case': 0}"
+case_000001,Report_File_02,complete,2025-07-28T17:28:22.568668,Micro_Process,,a8d924ef-b722-4aa4-82a8-1ba18f609a48,{'duration_minutes': 7.8}
+case_000001,Report_File_02_Option_B,start,2025-07-28T17:30:07.257945,Micro_Process,,a7001929-d528-4e7f-ab65-8374ea1f10d8,"{'temporal_delay_minutes': 1.74, 'concurrent_activities_in_case': 0, 'out_of_order': True, 'delivery_delay_minutes': -25.86}"
+case_000002,Process_Item_01,start,2025-07-28T17:08:49.872351,Simple_Process,,58d1fada-4bfa-4de9-a86b-03c1ae40ed15,"{'temporal_delay_minutes': 4.57, 'concurrent_activities_in_case': 0}"
+case_000002,Process_Item_01,complete,2025-07-28T17:10:28.135320,Simple_Process,,67a7e21f-21b7-4829-9f12-3d01df112d94,{'duration_minutes': 1.64}
+case_000002,Execute_File_02,start,2025-07-28T17:11:36.488487,Simple_Process,,aaa0a2df-d78d-40fc-965b-919f14c4fe63,"{'temporal_delay_minutes': 1.14, 'concurrent_activities_in_case': 0}"
+case_000002,Validate_Form_03,start,2025-07-28T17:13:39.684221,Simple_Process,,3cf32a70-d3b0-4a0c-8a31-d6271931a4d1,"{'temporal_delay_minutes': 3.19, 'concurrent_activities_in_case': 0}"
+case_000002,Validate_Form_03,complete,2025-07-28T17:16:22.505575,Simple_Process,,85303924-4446-496d-9c03-95cca3cff8ff,"{'duration_minutes': 2.71, 'out_of_order': True, 'delivery_delay_minutes': -3.72}"
+case_000002,Execute_File_02,complete,2025-07-28T17:19:40.182976,Simple_Process,,649ed504-be45-4695-b8a7-cd0e1ff71e32,{'duration_minutes': 8.06}
+case_000002,Analyze_Account_04,start,2025-07-28T17:25:11.394536,Simple_Process,,8c11a6b3-d91f-46bf-815b-7174ecb8851a,"{'temporal_delay_minutes': 5.52, 'concurrent_activities_in_case': 0, 'out_of_order': True, 'delivery_delay_minutes': -5.26}"
+case_000001,Report_File_02_Option_B,complete,2025-07-28T17:10:33.166609,Micro_Process,,78a9308a-278b-455a-a8dc-c94c149ef8b5,"{'duration_minutes': 6.3, 'out_of_order': True, 'delivery_delay_minutes': 11.22}"
+case_000002,Analyze_Account_04,complete,2025-07-28T17:23:59.110897,Simple_Process,,0f847b7a-6562-4dd6-ab33-b6f3d7cee2ce,{'duration_minutes': 4.05}
+case_000001,Report_File_02_Option_A,start,2025-07-28T17:24:35.832013,Micro_Process,,d064f948-b18f-4fee-a21f-8484546d8314,"{'temporal_delay_minutes': 2.82, 'concurrent_activities_in_case': 0}"
+case_000002,Analyze_Account_04_Option_A,start,2025-07-28T17:26:52.699446,Simple_Process,,e89fba7b-d080-4872-8129-d0f12023868c,"{'temporal_delay_minutes': 2.89, 'concurrent_activities_in_case': 0}"
+case_000001,Report_File_02_Option_A,complete,2025-07-28T17:33:07.286909,Micro_Process,,86b406a1-eae3-472e-9216-cb567f76454d,{'duration_minutes': 8.52}
+case_000001,Report_File_02_Option_A,start,2025-07-28T17:33:17.296135,Micro_Process,,8fed9e38-b9c5-4c92-9b91-a872d3efe962,"{'temporal_delay_minutes': 4.91, 'concurrent_activities_in_case': 0}"
+case_000002,Analyze_Account_04_Option_A,complete,2025-07-28T17:36:12.937617,Simple_Process,,25a1a0f3-5a8f-4534-ba19-0684b08fcc08,{'duration_minutes': 9.34}
+case_000002,Analyze_Account_04_Option_B,start,2025-07-28T17:42:08.177682,Simple_Process,,7e8e8d65-5e48-4b66-8030-8ee81a4a81ca,"{'temporal_delay_minutes': 5.92, 'concurrent_activities_in_case': 0}"
+case_000002,Analyze_Account_04_Option_B,complete,2025-07-28T17:47:13.882200,Simple_Process,,28aabdb3-f405-4dd7-bf01-d5164f9b33cd,{'duration_minutes': 5.1}
+case_000002,Analyze_Account_04_Option_B,start,2025-07-28T17:27:26.272785,Simple_Process,,2cc6b430-5d58-47dd-93fe-42855b5958b7,"{'temporal_delay_minutes': 3.45, 'concurrent_activities_in_case': 0, 'out_of_order': True, 'delivery_delay_minutes': 26.96}"
